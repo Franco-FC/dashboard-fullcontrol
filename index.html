@@ -280,19 +280,26 @@
   <div class="dash-header">
     <div>
       <h1>Evolución Semanal</h1>
-      <span class="period-badge">Servicio Técnico · todas las semanas</span>
+      <span class="period-badge" id="evolPeriodBadge">Servicio Técnico · todas las semanas</span>
     </div>
     <div class="dash-actions">
       <button class="btn-secondary" onclick="showUpload()">← Volver</button>
     </div>
   </div>
-  <div class="section-label">Total de OTs por semana</div>
+
+  <!-- Filtro por mes -->
+  <div style="margin-bottom:1.5rem;">
+    <div class="section-label">Filtrar por período</div>
+    <div id="mesTabs" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+  </div>
+
+  <div class="section-label">Total de OTs</div>
   <div class="chart-full"><h3>OTs finalizadas semana a semana</h3><div style="position:relative;height:260px;"><canvas id="chartEvolOTs"></canvas></div></div>
   <div class="charts-row">
     <div class="chart-card"><h3>Puntaje por técnico</h3><div class="chart-wrap-tall"><canvas id="chartEvolPuntaje"></canvas></div></div>
     <div class="chart-card"><h3>% Efectividad por técnico</h3><div class="chart-wrap-tall"><canvas id="chartEvolEfect"></canvas></div></div>
   </div>
-  <div class="section-label">Comparativa semanal</div>
+  <div class="section-label">Comparativa por semana</div>
   <div class="table-card-full"><h3>Resumen por semana</h3><table class="dt" id="tablaEvolucion"></table></div>
 </div>
 
@@ -632,6 +639,9 @@ function buildDashboard(w){
 }
 
 // ── EVOLUCIÓN ──
+let _allWeeks = [];
+let _mesActivo = 'todos';
+
 async function showEvolucion(){
   if(!window._fb) return;
   document.getElementById('dashboard').style.display='none';
@@ -639,39 +649,128 @@ async function showEvolucion(){
   document.getElementById('evolucionScreen').style.display='block';
   document.getElementById('topPeriod').textContent='Evolución';
   window.scrollTo(0,0);
-  const weeks=await window._fb.getWeeks();
+  _allWeeks = await window._fb.getWeeks();
+  if(!_allWeeks.length) return;
+  _mesActivo = 'todos';
+  renderMesTabs();
+  renderEvolucion();
+}
+
+function renderMesTabs(){
+  const meses = ['todos', ...new Set(_allWeeks.map(w=>w.mes||'Sin clasificar'))];
+  const tabs = document.getElementById('mesTabs');
+  tabs.innerHTML = meses.map(m=>`
+    <button onclick="setMesActivo('${m}')" id="tab-${m.replace(/\s+/g,'-')}"
+      style="padding:6px 14px;border-radius:20px;border:1px solid var(--border);
+      font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .15s;
+      background:${m===_mesActivo?'var(--navy)':'var(--white)'};
+      color:${m===_mesActivo?'white':'var(--text)'};">
+      ${m==='todos'?'📊 Todos los meses':'📁 '+m}
+    </button>`).join('');
+}
+
+function setMesActivo(mes){
+  _mesActivo = mes;
+  renderMesTabs();
+  renderEvolucion();
+}
+
+function renderEvolucion(){
+  const weeks = _mesActivo==='todos'
+    ? _allWeeks
+    : _allWeeks.filter(w=>(w.mes||'Sin clasificar')===_mesActivo);
+
   if(!weeks.length) return;
-  const labels=weeks.map(w=>w.label);
+
+  const badge = _mesActivo==='todos' ? 'Todas las semanas' : _mesActivo;
+  document.getElementById('evolPeriodBadge').textContent = `Servicio Técnico · ${badge}`;
+
+  const labels = weeks.map(w=>w.label);
 
   destroyChart('evolOTs');
   charts['evolOTs']=new Chart(document.getElementById('chartEvolOTs'),{
-    type:'line',data:{labels,datasets:[{label:'OTs finalizadas',data:weeks.map(w=>w.totalOTs),borderColor:'#0f2540',backgroundColor:'rgba(15,37,64,.08)',tension:.3,pointRadius:5,fill:true}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{grid:{color:'#eef1f6'},beginAtZero:false}}}
+    type:'line',
+    data:{labels,datasets:[{
+      label:'OTs finalizadas',
+      data:weeks.map(w=>w.totalOTs),
+      borderColor:'#0f2540',backgroundColor:'rgba(15,37,64,.08)',
+      tension:.3,pointRadius:5,fill:true
+    }]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{x:{grid:{display:false}},y:{grid:{color:'#eef1f6'},beginAtZero:false}}}
   });
 
-  const EVOL_TECNICOS = ['Santiago Munhoz','Ariel Sandoval','Mauricio Gonzales','Mauricio Gonzalez','Gonzalo Rodriguez'];
-  const EVOL_COLORS = ['#2e6da4','#e8a04a','#c0392b','#1a7a56','#5340b8'];
+  const EVOL_TECNICOS=['Santiago Munhoz','Ariel Sandoval','Mauricio Gonzales','Mauricio Gonzalez','Gonzalo Rodriguez'];
+  const EVOL_COLORS=['#2e6da4','#e8a04a','#c0392b','#1a7a56','#5340b8'];
   const tecNames=[...new Set(weeks.flatMap(w=>w.tecnicos.map(t=>t.nombre)))]
     .filter(t=>EVOL_TECNICOS.some(v=>t.toLowerCase().includes(v.toLowerCase().split(' ')[0])));
-  const getTecColor = (t) => { const i = EVOL_TECNICOS.findIndex(v=>t.toLowerCase().includes(v.toLowerCase().split(' ')[0])); return EVOL_COLORS[i>=0?i:0]; };
+  const getTecColor=(t)=>{const i=EVOL_TECNICOS.findIndex(v=>t.toLowerCase().includes(v.toLowerCase().split(' ')[0]));return EVOL_COLORS[i>=0?i:0];};
+
   destroyChart('evolPuntaje');
   charts['evolPuntaje']=new Chart(document.getElementById('chartEvolPuntaje'),{
-    type:'line',data:{labels,datasets:tecNames.map((t)=>({label:t,data:weeks.map(w=>{const f=w.tecnicos.find(x=>x.nombre===t);return f?f.puntaje:null;}),borderColor:getTecColor(t),backgroundColor:'transparent',tension:.3,pointRadius:4,spanGaps:true}))},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:10}}}},scales:{x:{grid:{display:false}},y:{grid:{color:'#eef1f6'},beginAtZero:true}}}
-  });
-  destroyChart('evolEfect');
-  charts['evolEfect']=new Chart(document.getElementById('chartEvolEfect'),{
-    type:'line',data:{labels,datasets:tecNames.map((t)=>({label:t,data:weeks.map(w=>{const f=w.tecnicos.find(x=>x.nombre===t);return f?f.efect:null;}),borderColor:getTecColor(t),backgroundColor:'transparent',tension:.3,pointRadius:4,spanGaps:true}))},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:10}}}},scales:{x:{grid:{display:false}},y:{grid:{color:'#eef1f6'},beginAtZero:true,ticks:{callback:v=>v+'%'}}}}
+    type:'line',
+    data:{labels,datasets:tecNames.map(t=>({
+      label:t,data:weeks.map(w=>{const f=w.tecnicos.find(x=>x.nombre===t);return f?f.puntaje:null;}),
+      borderColor:getTecColor(t),backgroundColor:'transparent',tension:.3,pointRadius:4,spanGaps:true
+    }))},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom',labels:{font:{size:10}}}},
+      scales:{x:{grid:{display:false}},y:{grid:{color:'#eef1f6'},beginAtZero:true}}}
   });
 
-  let html=`<thead><tr><th>Semana</th><th>Total OTs</th><th>% Finaliz.</th>${tecNames.map(t=>`<th style="color:white">${t}</th>`).join('')}<th style="color:white">Of. Técnica</th></tr></thead><tbody>`;
-  weeks.forEach((w,i)=>{
-    const bg=i%2===0?'':'background:var(--surface)';
-    html+=`<tr style="${bg}"><td><strong>${w.label}</strong></td><td>${w.totalOTs}</td><td>${w.pct}</td>`;
-    tecNames.forEach(t=>{const f=w.tecnicos.find(x=>x.nombre===t);html+=`<td>${f?f.efect.toFixed(1)+'%':'—'}</td>`;});
-    html+=`<td>${w.sinTec}</td></tr>`;
+  destroyChart('evolEfect');
+  charts['evolEfect']=new Chart(document.getElementById('chartEvolEfect'),{
+    type:'line',
+    data:{labels,datasets:tecNames.map(t=>({
+      label:t,data:weeks.map(w=>{const f=w.tecnicos.find(x=>x.nombre===t);return f?f.efect:null;}),
+      borderColor:getTecColor(t),backgroundColor:'transparent',tension:.3,pointRadius:4,spanGaps:true
+    }))},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom',labels:{font:{size:10}}}},
+      scales:{x:{grid:{display:false}},y:{grid:{color:'#eef1f6'},beginAtZero:true,ticks:{callback:v=>v+'%'}}}}
   });
+
+  // Tabla agrupada por mes si es "todos", o por semana si es un mes específico
+  let html='';
+  if(_mesActivo==='todos'){
+    // Agrupar por mes en la tabla
+    const byMes={};
+    weeks.forEach(w=>{const m=w.mes||'Sin clasificar';if(!byMes[m])byMes[m]=[];byMes[m].push(w);});
+    html=`<thead><tr><th>Mes / Semana</th><th>Total OTs</th><th>% Finaliz.</th>${tecNames.map(t=>`<th style="color:white">${t}</th>`).join('')}<th style="color:white">Of. Técnica</th></tr></thead><tbody>`;
+    Object.keys(byMes).forEach(mes=>{
+      // Fila de mes (subtotal)
+      const mWeeks=byMes[mes];
+      const totalOTs=mWeeks.reduce((s,w)=>s+w.totalOTs,0);
+      const sinTec=mWeeks.reduce((s,w)=>s+w.sinTec,0);
+      html+=`<tr style="background:#1a3a5c;">
+        <td style="color:white;font-weight:600;">📁 ${mes}</td>
+        <td style="color:white;font-weight:600;">${totalOTs}</td>
+        <td style="color:rgba(255,255,255,.7);">—</td>
+        ${tecNames.map(()=>`<td style="color:rgba(255,255,255,.5);">—</td>`).join('')}
+        <td style="color:white;font-weight:600;">${sinTec}</td>
+      </tr>`;
+      // Filas de semanas dentro del mes
+      mWeeks.forEach((w,i)=>{
+        const bg=i%2===0?'':'background:var(--surface)';
+        html+=`<tr style="${bg}">
+          <td style="padding-left:20px;">↳ ${w.label}</td>
+          <td>${w.totalOTs}</td><td>${w.pct}</td>
+          ${tecNames.map(t=>{const f=w.tecnicos.find(x=>x.nombre===t);return`<td>${f?f.efect.toFixed(1)+'%':'—'}</td>`;}).join('')}
+          <td>${w.sinTec}</td>
+        </tr>`;
+      });
+    });
+  } else {
+    // Solo semanas del mes seleccionado
+    html=`<thead><tr><th>Semana</th><th>Total OTs</th><th>% Finaliz.</th>${tecNames.map(t=>`<th style="color:white">${t}</th>`).join('')}<th style="color:white">Of. Técnica</th></tr></thead><tbody>`;
+    weeks.forEach((w,i)=>{
+      const bg=i%2===0?'':'background:var(--surface)';
+      html+=`<tr style="${bg}"><td><strong>${w.label}</strong></td><td>${w.totalOTs}</td><td>${w.pct}</td>`;
+      tecNames.forEach(t=>{const f=w.tecnicos.find(x=>x.nombre===t);html+=`<td>${f?f.efect.toFixed(1)+'%':'—'}</td>`;});
+      html+=`<td>${w.sinTec}</td></tr>`;
+    });
+  }
   document.getElementById('tablaEvolucion').innerHTML=html+'</tbody>';
 }
 
