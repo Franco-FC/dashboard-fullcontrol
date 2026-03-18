@@ -398,7 +398,8 @@ function renderConfig(i,name,count){
   const div=document.createElement('div');
   div.className='file-item';
   div.innerHTML=`<span class="file-item-name">📄 ${name} <span style="color:var(--text-muted);font-weight:400;">(${count} OTs)</span></span>
-    <label>OTs generadas&nbsp;</label><input type="number" id="otGen_${i}" placeholder="ej: 212" />
+    <label>Mes/Año&nbsp;</label><input type="text" id="mes_${i}" placeholder="ej: Marzo 2026" />
+    <label>&nbsp;OTs generadas&nbsp;</label><input type="number" id="otGen_${i}" placeholder="ej: 212" />
     <label>&nbsp;Período&nbsp;</label><input type="text" id="label_${i}" placeholder="Semana 2 · 09/03" />`;
   document.getElementById('configRows').appendChild(div);
 }
@@ -421,8 +422,9 @@ btnGenerate.addEventListener('click', async()=>{
       const{df}=pendingFiles[i];
       const otGen=parseInt(document.getElementById(`otGen_${i}`)?.value)||df.length;
       const label=document.getElementById(`label_${i}`)?.value||`Semana ${i+1}`;
+      const mes=document.getElementById(`mes_${i}`)?.value||'Sin clasificar';
       const summary=computeSummary(df,otGen,label);
-      await window._fb.saveWeek({...summary,timestamp:Date.now()});
+      await window._fb.saveWeek({...summary,mes,timestamp:Date.now()});
     }
     statusMsg.className='status ok';statusMsg.textContent='✓ Guardado en Firebase correctamente';
     pendingFiles=[];
@@ -459,14 +461,53 @@ function renderSavedWeeks(weeks){
   if(!weeks.length){section.style.display='none';return;}
   section.style.display='block';
   btnEvol.style.display=weeks.length>1?'flex':'none';
-  weeks.slice().reverse().forEach(w=>{
-    const div=document.createElement('div');
-    div.className='saved-week-item';
-    div.innerHTML=`<div style="flex:1"><div class="saved-week-label">${w.label}</div><div class="saved-week-sub">${w.totalOTs} OTs · ${w.edificios} edificios · ${w.pct} finalizadas</div></div>
-      <button class="btn-view-week" onclick='buildDashboard(${JSON.stringify(w).replace(/'/g,"&#39;")})'>Ver →</button>
-      <button class="btn-del-week" onclick='deleteWeek("${w.id}")'>✕</button>`;
-    list.appendChild(div);
+
+  // Group by mes
+  const byMes={};
+  weeks.forEach(w=>{
+    const mes=w.mes||'Sin clasificar';
+    if(!byMes[mes]) byMes[mes]=[];
+    byMes[mes].push(w);
   });
+
+  // Sort months: most recent first
+  const mesesOrdenados=Object.keys(byMes).reverse();
+
+  mesesOrdenados.forEach(mes=>{
+    // Folder header
+    const folder=document.createElement('div');
+    folder.style.cssText='margin-bottom:4px;';
+    const folderId=`folder-${mes.replace(/\s+/g,'-')}`;
+    folder.innerHTML=`
+      <div onclick="toggleFolder('${folderId}')" style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--navy);border-radius:8px;cursor:pointer;user-select:none;">
+        <span id="${folderId}-icon" style="font-size:13px;">📁</span>
+        <span style="flex:1;font-size:13px;font-weight:600;color:white;">${mes}</span>
+        <span style="font-size:11px;color:rgba(255,255,255,.5);">${byMes[mes].length} semana(s)</span>
+        <span id="${folderId}-arrow" style="color:rgba(255,255,255,.5);font-size:11px;">▾</span>
+      </div>
+      <div id="${folderId}" style="padding-left:12px;margin-top:4px;">
+        ${byMes[mes].map(w=>`
+          <div class="saved-week-item" style="margin-bottom:4px;">
+            <div style="flex:1">
+              <div class="saved-week-label">📄 ${w.label}</div>
+              <div class="saved-week-sub">${w.totalOTs} OTs · ${w.pct} finalizadas</div>
+            </div>
+            <button class="btn-view-week" onclick='buildDashboard(${JSON.stringify(w).replace(/'/g,"&#39;")})'>Ver →</button>
+            <button class="btn-del-week" onclick='deleteWeek("${w.id}")'>✕</button>
+          </div>`).join('')}
+      </div>`;
+    list.appendChild(folder);
+  });
+}
+
+function toggleFolder(id){
+  const el=document.getElementById(id);
+  const arrow=document.getElementById(id+'-arrow');
+  const icon=document.getElementById(id+'-icon');
+  const open=el.style.display!=='none';
+  el.style.display=open?'none':'block';
+  arrow.textContent=open?'▸':'▾';
+  icon.textContent=open?'📁':'📂';
 }
 
 async function deleteWeek(id){
