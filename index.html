@@ -642,6 +642,20 @@ function buildDashboard(w){
 let _allWeeks = [];
 let _mesActivo = 'todos';
 
+// Extrae la primera fecha del label: "Semana 2 · 09/03 al 15/03" → Date(2026, 2, 9)
+function extractStartDate(label){
+  const m = label.match(/(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?/);
+  if(!m) return new Date(0);
+  const day = parseInt(m[1]);
+  const month = parseInt(m[2]) - 1;
+  const year = m[3] ? (m[3].length===2 ? 2000+parseInt(m[3]) : parseInt(m[3])) : 2026;
+  return new Date(year, month, day);
+}
+
+function sortWeeks(weeks){
+  return [...weeks].sort((a,b) => extractStartDate(a.label) - extractStartDate(b.label));
+}
+
 async function showEvolucion(){
   if(!window._fb) return;
   document.getElementById('dashboard').style.display='none';
@@ -649,7 +663,8 @@ async function showEvolucion(){
   document.getElementById('evolucionScreen').style.display='block';
   document.getElementById('topPeriod').textContent='Evolución';
   window.scrollTo(0,0);
-  _allWeeks = await window._fb.getWeeks();
+  const raw = await window._fb.getWeeks();
+  _allWeeks = sortWeeks(raw);
   if(!_allWeeks.length) return;
   _mesActivo = 'todos';
   renderMesTabs();
@@ -657,7 +672,14 @@ async function showEvolucion(){
 }
 
 function renderMesTabs(){
-  const meses = ['todos', ...new Set(_allWeeks.map(w=>w.mes||'Sin clasificar'))];
+  // Sort months by the earliest week they contain
+  const mesesRaw = [...new Set(_allWeeks.map(w=>w.mes||'Sin clasificar'))];
+  const mesesOrdenados = mesesRaw.sort((a,b)=>{
+    const aDate = Math.min(..._allWeeks.filter(w=>(w.mes||'Sin clasificar')===a).map(w=>extractStartDate(w.label)));
+    const bDate = Math.min(..._allWeeks.filter(w=>(w.mes||'Sin clasificar')===b).map(w=>extractStartDate(w.label)));
+    return aDate - bDate;
+  });
+  const meses = ['todos', ...mesesOrdenados];
   const tabs = document.getElementById('mesTabs');
   tabs.innerHTML = meses.map(m=>`
     <button onclick="setMesActivo('${m}')" id="tab-${m.replace(/\s+/g,'-')}"
@@ -737,10 +759,15 @@ function renderEvolucion(){
     // Agrupar por mes en la tabla
     const byMes={};
     weeks.forEach(w=>{const m=w.mes||'Sin clasificar';if(!byMes[m])byMes[m]=[];byMes[m].push(w);});
+    const mesesSorted=Object.keys(byMes).sort((a,b)=>{
+      const aDate=Math.min(...byMes[a].map(w=>extractStartDate(w.label)));
+      const bDate=Math.min(...byMes[b].map(w=>extractStartDate(w.label)));
+      return aDate-bDate;
+    });
     html=`<thead><tr><th>Mes / Semana</th><th>Total OTs</th><th>% Finaliz.</th>${tecNames.map(t=>`<th style="color:white">${t}</th>`).join('')}<th style="color:white">Of. Técnica</th></tr></thead><tbody>`;
-    Object.keys(byMes).forEach(mes=>{
+    mesesSorted.forEach(mes=>{
       // Fila de mes (subtotal)
-      const mWeeks=byMes[mes];
+      const mWeeks=sortWeeks(byMes[mes]);
       const totalOTs=mWeeks.reduce((s,w)=>s+w.totalOTs,0);
       const sinTec=mWeeks.reduce((s,w)=>s+w.sinTec,0);
       html+=`<tr style="background:#1a3a5c;">
