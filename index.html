@@ -8,30 +8,24 @@
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
-<script type="module">
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
-
-const app = initializeApp({
-  apiKey: "AIzaSyB-igzxdsgAj-MhzGbNfLe95G60lzrCSZ4",
-  authDomain: "area-tecnica-fc.firebaseapp.com",
-  projectId: "area-tecnica-fc",
-  storageBucket: "area-tecnica-fc.firebasestorage.app",
-  messagingSenderId: "291501593759",
-  appId: "1:291501593759:web:c6dad7938605b0a666feaa"
-});
-const db = getFirestore(app);
-
-window._fb = {
-  saveWeek: async (data) => addDoc(collection(db,'semanas_servtec'), data),
-  getWeeks: async () => {
-    const snap = await getDocs(query(collection(db,'semanas_servtec'), orderBy('timestamp','asc')));
-    return snap.docs.map(d => ({id:d.id,...d.data()}));
-  },
-  deleteWeek: async (id) => deleteDoc(doc(db,'semanas_servtec',id))
-};
-
-window.addEventListener('load', () => window.onFirebaseReady && window.onFirebaseReady());
+<script src="https://cdn.jsdelivr.net/npm/firebase@9.23.0/firebase-app-compat.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/firebase@9.23.0/firebase-firestore-compat.min.js"></script>
+<script>
+  firebase.initializeApp({
+    apiKey: "AIzaSyB-igzxdsgAj-MhzGbNfLe95G60lzrCSZ4",
+    authDomain: "area-tecnica-fc.firebaseapp.com",
+    projectId: "area-tecnica-fc",
+    storageBucket: "area-tecnica-fc.firebasestorage.app",
+    messagingSenderId: "291501593759",
+    appId: "1:291501593759:web:c6dad7938605b0a666feaa"
+  });
+  const db = firebase.firestore();
+  window._fb = {
+    saveWeek:   (data) => db.collection('semanas_servtec').add(data),
+    getWeeks:   async () => { const s = await db.collection('semanas_servtec').orderBy('timestamp','asc').get(); return s.docs.map(d=>({id:d.id,...d.data()})); },
+    deleteWeek: (id)  => db.collection('semanas_servtec').doc(id).delete()
+  };
+  window.dispatchEvent(new Event('firebaseReady'));
 </script>
 <style>
   :root {
@@ -280,8 +274,6 @@ window.addEventListener('load', () => window.onFirebaseReady && window.onFirebas
     <div class="table-card"><h3>Top 10 tipos de servicio</h3><table class="dt" id="tablaServicios"></table></div>
     <div class="table-card"><h3>OTs por día de semana</h3><table class="dt" id="tablaDias"></table></div>
   </div>
-  <div class="section-label">Edificios con más órdenes</div>
-  <div class="chart-full"><h3>Top 10 edificios con más OTs</h3><div style="position:relative;height:300px;"><canvas id="chartEdificios"></canvas></div></div>
 </div>
 
 <div id="evolucionScreen">
@@ -411,8 +403,16 @@ function renderConfig(i,name,count){
   document.getElementById('configRows').appendChild(div);
 }
 
-btnGenerate.addEventListener('click',async()=>{
-  if(!window._fb){statusMsg.className='status err';statusMsg.textContent='Firebase no disponible aún, esperá un momento.';return;}
+btnGenerate.addEventListener('click', async()=>{
+  if(!window._fb){
+    statusMsg.className='status';statusMsg.textContent='Conectando con Firebase...';
+    await new Promise(resolve=>{
+      if(window._fb){resolve();return;}
+      window.addEventListener('firebaseReady',resolve,{once:true});
+      setTimeout(resolve,8000); // fallback máximo 8 seg
+    });
+  }
+  if(!window._fb){statusMsg.className='status err';statusMsg.textContent='No se pudo conectar con Firebase. Verificá tu conexión a internet.';return;}
   btnGenerate.disabled=true;
   statusMsg.className='status';statusMsg.textContent='Guardando en Firebase...';
   try{
@@ -441,7 +441,10 @@ document.getElementById('btnReset').addEventListener('click',showUpload);
 document.getElementById('btnViewEvolucion').addEventListener('click',showEvolucion);
 
 async function loadSavedWeeks(){
-  if(!window._fb){setTimeout(loadSavedWeeks,500);return;}
+  if(!window._fb){
+    window.addEventListener('firebaseReady', loadSavedWeeks, {once:true});
+    return;
+  }
   try{
     const weeks=await window._fb.getWeeks();
     renderSavedWeeks(weeks);
@@ -475,10 +478,10 @@ async function deleteWeek(id){
 
 // ── COMPUTE SUMMARY ──
 function computeSummary(df,otGen,label){
+  const TECNICOS_VALIDOS = ['Santiago Munhoz','Ariel Sandoval','Cerrajeria Aleluya','Mauricio Gonzales','Gonzalo Rodriguez','Mauricio Gonzalez'];
   const total=df.length;
   const conTec=df.filter(r=>r['Tecnico']&&String(r['Tecnico']).trim()!=='');
   const sinTec=total-conTec.length;
-  const edificios=new Set(df.map(r=>r['Cuenta'])).size;
   const pct=((total/otGen)*100).toFixed(1)+'%';
   const tecMap={},tecStats={},tecSrvMap={};
   conTec.forEach(r=>{
@@ -494,25 +497,21 @@ function computeSummary(df,otGen,label){
     const sk=String(r['Servicio']||'').trim();
     if(sk)tecSrvMap[t][sk]=(tecSrvMap[t][sk]||0)+1;
   });
-  const tecnicos=Object.entries(tecMap).sort((a,b)=>b[1]-a[1]).map(([t,n])=>{
-    const st=tecStats[t]||{dias:new Set(),g_tec:0,g_cerr:0};
-    const dias=st.dias.size||1;
-    const puntaje=parseFloat(calcPuntaje(tecSrvMap[t]||{}).toFixed(2));
-    const efect=parseFloat(((puntaje/(9*dias))*100).toFixed(1));
-    return{nombre:t,ots:n,dias,g_tec:st.g_tec,g_cerr:st.g_cerr,puntaje,efect,srvMap:tecSrvMap[t]};
-  });
+  const tecnicos=Object.entries(tecMap)
+    .filter(([t])=>TECNICOS_VALIDOS.some(v=>t.toLowerCase().includes(v.toLowerCase().split(' ')[0].toLowerCase())))
+    .sort((a,b)=>b[1]-a[1]).map(([t,n])=>{
+      const st=tecStats[t]||{dias:new Set(),g_tec:0,g_cerr:0};
+      const dias=st.dias.size||1;
+      const puntaje=parseFloat(calcPuntaje(tecSrvMap[t]||{}).toFixed(2));
+      const efect=parseFloat(((puntaje/(9*dias))*100).toFixed(1));
+      return{nombre:t,ots:n,dias,g_tec:st.g_tec,g_cerr:st.g_cerr,puntaje,efect,srvMap:tecSrvMap[t]};
+    });
   const srvMap={};
   df.forEach(r=>{const s=r['Servicio'];if(s){const k=String(s).trim();srvMap[k]=(srvMap[k]||0)+1;}});
   const topServicios=Object.entries(srvMap).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([s,n])=>({s,n}));
   const dayMap={};
   df.forEach(r=>{const d=parseDate(r['Fecha de Creación']);if(d){const dow=d.getDay();dayMap[dow]=(dayMap[dow]||0)+1;}});
-  const edMap={};
-  df.forEach(r=>{const e=r['Cuenta'];if(e){const k=String(e).trim();edMap[k]=(edMap[k]||0)+1;}});
-  const topEdificios=Object.entries(edMap).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([k,n])=>{
-    const m=k.match(/\(([^,)]+)/);const raw=m?m[1].trim():k.slice(0,30);
-    return{label:raw.replace(/\s*N[°º]\s*/gi,' ').trim(),n};
-  });
-  return{label,otGen,totalOTs:total,sinTec,edificios,pct,tecnicos,topServicios,dayMap,topEdificios};
+  return{label,otGen,totalOTs:total,sinTec,pct,tecnicos,topServicios,dayMap};
 }
 
 // ── BUILD DASHBOARD ──
@@ -532,7 +531,6 @@ function buildDashboard(w){
     {cls:'navy',label:'Total OTs finalizadas',value:w.totalOTs,sub:'órdenes registradas'},
     {cls:'green',label:'% finalizadas vs generadas',value:w.pct,sub:`${w.totalOTs} de ${w.otGen} generadas`},
     {cls:'purple',label:'Cerradas en of. técnica',value:w.sinTec,sub:'sin técnico asignado'},
-    {cls:'teal',label:'Edificios atendidos',value:w.edificios,sub:'total del período'},
   ].map(k=>`<div class="kpi-card ${k.cls}"><div class="kpi-label">${k.label}</div><div class="kpi-value">${k.value}</div><div class="kpi-sub">${k.sub}</div></div>`).join('');
 
   const tl=[...w.tecnicos.map(t=>t.nombre),'Oficina Técnica'];
@@ -579,15 +577,9 @@ function buildDashboard(w){
   DO.forEach(d=>{const n=w.dayMap[d]||0;dHTML+=`<tr><td>${DE[d]}</td><td>${n}</td><td>${((n/total)*100).toFixed(1)}%</td></tr>`;});
   document.getElementById('tablaDias').innerHTML=dHTML+'</tbody>';
 
-  destroyChart('edificios');
-  charts['edificios']=new Chart(document.getElementById('chartEdificios'),{
-    type:'bar',data:{labels:w.topEdificios.map(e=>e.label),datasets:[{data:w.topEdificios.map(e=>e.n),backgroundColor:'#1a3a5c',borderRadius:4,borderSkipped:false}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:11},maxRotation:35}},y:{grid:{color:'#eef1f6'},ticks:{font:{size:11},stepSize:1}}}}
-  });
-
   document.getElementById('btnDownload').onclick=()=>{
     const wb=XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['KPI','Valor'],['Total OTs',w.totalOTs],['% Finalizadas',w.pct],['Cerradas Of. Técnica',w.sinTec],['Edificios',w.edificios]]),'KPIs');
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['KPI','Valor'],['Total OTs',w.totalOTs],['% Finalizadas',w.pct],['Cerradas Of. Técnica',w.sinTec]]),'KPIs');
     XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['Técnico','OTs','Puntaje','% Efect.'],...w.tecnicos.map(t=>[t.nombre,t.ots,t.puntaje,t.efect+'%'])]),'Técnicos');
     XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['Servicio','Cant.'],...w.topServicios.map(s=>[s.s,s.n])]),'Servicios');
     XLSX.writeFile(wb,`Dashboard_ST_${w.label.replace(/[\s\/]+/g,'_')}.xlsx`);
@@ -624,9 +616,9 @@ async function showEvolucion(){
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:10}}}},scales:{x:{grid:{display:false}},y:{grid:{color:'#eef1f6'},beginAtZero:true,ticks:{callback:v=>v+'%'}}}}
   });
 
-  let html=`<thead><tr><th>Semana</th><th>Total OTs</th><th>% Finaliz.</th><th>Edificios</th>${tecNames.map(t=>`<th>${t}</th>`).join('')}</tr></thead><tbody>`;
+  let html=`<thead><tr><th>Semana</th><th>Total OTs</th><th>% Finaliz.</th>${tecNames.map(t=>`<th>${t}</th>`).join('')}</tr></thead><tbody>`;
   weeks.forEach((w,i)=>{
-    html+=`<tr><td><strong>${w.label}</strong></td><td>${w.totalOTs}</td><td>${w.pct}</td><td>${w.edificios}</td>`;
+    html+=`<tr><td><strong>${w.label}</strong></td><td>${w.totalOTs}</td><td>${w.pct}</td>`;
     tecNames.forEach(t=>{const f=w.tecnicos.find(x=>x.nombre===t);html+=`<td>${f?f.efect.toFixed(1)+'%':'—'}</td>`;});
     html+='</tr>';
   });
