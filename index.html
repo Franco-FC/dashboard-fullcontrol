@@ -489,9 +489,13 @@ function computeSummary(df,otGen,label){
     tecMap[t]=(tecMap[t]||0)+1;
     if(!tecStats[t])tecStats[t]={dias:new Set(),g_tec:0,g_cerr:0};
     if(!tecSrvMap[t])tecSrvMap[t]={};
-    const fecha=r['Fecha de finalizacion'];
-    if(fecha){const d=fecha instanceof Date?fecha:new Date(fecha);if(!isNaN(d)&&d.getDay()!==0&&d.getDay()!==6)tecStats[t].dias.add(d.toDateString());}
     const srv=String(r['Servicio']||'').toLowerCase();
+    const esGuardia = srv.includes('guardia tecnica')||srv.includes('9. guardia')||srv.includes('guardia cerrajer')||srv.includes('92.');
+    const fecha=r['Fecha de finalizacion'];
+    if(fecha && !esGuardia){
+      const d=fecha instanceof Date?fecha:new Date(fecha);
+      if(!isNaN(d)&&d.getDay()!==0&&d.getDay()!==6) tecStats[t].dias.add(d.toDateString());
+    }
     if(srv.includes('guardia tecnica')||srv.includes('9. guardia'))tecStats[t].g_tec++;
     if(srv.includes('guardia cerrajer')||srv.includes('92.'))tecStats[t].g_cerr++;
     const sk=String(r['Servicio']||'').trim();
