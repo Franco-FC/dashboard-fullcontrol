@@ -44,7 +44,6 @@
   /* HOME */
   #homeScreen{min-height:100vh;display:flex;flex-direction:column;background:var(--navy);}
   .home-header{padding:2.5rem 2.5rem 0;display:flex;align-items:center;gap:14px;}
-  .home-logo{width:56px;height:40px;background:transparent;display:flex;align-items:center;justify-content:center;}
   .home-logo svg{width:24px;height:24px;fill:var(--navy);}
   .home-brand{font-family:'Syne',sans-serif;font-size:20px;font-weight:900;color:white;letter-spacing:.02em;display:flex;align-items:center;}
   .home-hero{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3rem 2rem;text-align:center;}
@@ -70,8 +69,6 @@
   /* TOPBAR */
   .topbar{background:var(--navy);padding:0 2rem;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:100;}
   .topbar-brand{display:flex;align-items:center;gap:10px;}
-  .topbar-logo{width:40px;height:28px;background:transparent;display:flex;align-items:center;justify-content:center;}
-  .topbar-logo svg{width:40px;height:28px;}
   .topbar-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:white;}
   .topbar-nav{display:flex;align-items:center;gap:16px;}
   .topbar-period{font-size:12px;color:rgba(255,255,255,.5);}
@@ -179,41 +176,28 @@
 <!-- HOME -->
 <div id="homeScreen">
   <div class="home-header">
-    <div class="home-logo" style="background:transparent;width:56px;height:40px;"><svg viewBox="0 0 60 40" xmlns="http://www.w3.org/2000/svg">
-  <!-- Párpado superior gris oscuro -->
-  <path d="M2,20 Q15,2 30,8 Q45,2 58,20" fill="#4a4a4a"/>
-  <!-- Párpado inferior/sombra gris -->
-  <path d="M8,22 Q20,35 30,32 Q40,35 52,22 Q40,28 30,26 Q20,28 8,22Z" fill="#666"/>
-  <!-- Iris verde-amarillo -->
-  <ellipse cx="30" cy="20" rx="13" ry="13" fill="#8DC63F"/>
-  <!-- Pupila -->
-  <circle cx="30" cy="20" r="6" fill="#1a1a1a"/>
-  <!-- Reflejo -->
-  <circle cx="33" cy="17" r="2.5" fill="rgba(255,255,255,0.4)"/>
-  <!-- Línea de párpado superior -->
-  <path d="M2,20 Q15,2 30,8 Q45,2 58,20" fill="none" stroke="#333" stroke-width="1"/>
-</svg></div>
     <div class="home-brand"><span style="color:#3a3a3a;font-weight:900;letter-spacing:.02em;">FULL</span><span style="color:#8DC63F;font-weight:900;letter-spacing:.02em;">CONTROL</span></div>
   </div>
   <div class="home-hero">
+    <h1>Reporte <span>Semanal</span></h1>
     <p>Seleccioná el área para ver el dashboard semanal correspondiente.</p>
     <div class="home-cards">
       <div id="btnServtec" class="home-card servtec available">
         <div class="home-card-icon"><svg viewBox="0 0 24 24"><path d="M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z"/></svg></div>
         <h3>Servicio Técnico</h3>
-        <p>KPIs semanales, órdenes por técnico, edificios atendidos y más.</p>
+        
         <span class="arrow">Ingresar →</span>
       </div>
       <div class="home-card instalacion">
         <div class="home-card-icon"><svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/></svg></div>
         <h3>Instalación</h3>
-        <p>Seguimiento de proyectos, avances y equipos instalados por semana.</p>
+        
         <span class="coming-soon">Próximamente</span>
       </div>
       <div id="btnFidelizacion" class="home-card fidelizacion available">
         <div class="home-card-icon" style="background:var(--accent);"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3C9.5 3 8 4.5 8 4.5C6.5 3.5 4 4 3 6C2 8 3 10 4 11C3 12 3 14 4.5 15C4.5 17 6 18.5 8 18.5C8.5 19.5 10 21 12 21C14 21 15.5 19.5 16 18.5C18 18.5 19.5 17 19.5 15C21 14 21 12 20 11C21 10 22 8 21 6C20 4 17.5 3.5 16 4.5C16 4.5 14.5 3 12 3Z" stroke="var(--navy)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 3V21M8 4.5C8 4.5 8 8 10 10M16 4.5C16 4.5 16 8 14 10M4 11C4 11 7 11 10 13M20 11C20 11 17 11 14 13M4.5 15C4.5 15 7 15 10 16M19.5 15C19.5 15 17 15 14 16" stroke="var(--navy)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
         <h3>Fidelización</h3>
-        <p>Métricas de retención y seguimiento semanal de Mauricio González.</p>
+        
         <span class="arrow">Ingresar →</span>
       </div>
     </div>
@@ -226,7 +210,6 @@
         </div>
         <div style="flex:1;">
           <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:white;margin-bottom:3px;">Resumen de Efectividad · Todos los Técnicos</div>
-          <div style="font-size:12px;color:rgba(255,255,255,.45);">Ariel Sandoval · Santiago Munhoz · Mauricio González · Marcos Martin · Gonzalo Rodriguez · Lucas Espinosa · Ezequiel Wagner · Cristian Biglia</div>
         </div>
         <span style="font-size:12px;font-weight:600;color:var(--accent);">Ver tabla →</span>
       </div>
@@ -240,7 +223,6 @@
 <div id="resumenScreen" style="display:none;">
 <nav class="topbar">
   <div class="topbar-brand">
-    <div class="topbar-logo" style="background:transparent;width:40px;height:28px;"><svg viewBox="0 0 60 40" xmlns="http://www.w3.org/2000/svg"><path d="M2,20 Q15,2 30,8 Q45,2 58,20" fill="#4a4a4a"/><path d="M8,22 Q20,35 30,32 Q40,35 52,22 Q40,28 30,26 Q20,28 8,22Z" fill="#666"/><ellipse cx="30" cy="20" rx="13" ry="13" fill="#8DC63F"/><circle cx="30" cy="20" r="6" fill="#1a1a1a"/><circle cx="33" cy="17" r="2.5" fill="rgba(255,255,255,0.4)"/></svg></div>
     <span class="topbar-title">RESUMEN · TODOS LOS TÉCNICOS</span>
   </div>
   <div class="topbar-nav">
@@ -287,7 +269,6 @@
 <div id="servtecScreen" style="display:none;">
 <nav class="topbar">
   <div class="topbar-brand">
-    <div class="topbar-logo" style="background:transparent;width:40px;height:28px;"><svg viewBox="0 0 60 40" xmlns="http://www.w3.org/2000/svg"><path d="M2,20 Q15,2 30,8 Q45,2 58,20" fill="#4a4a4a"/><path d="M8,22 Q20,35 30,32 Q40,35 52,22 Q40,28 30,26 Q20,28 8,22Z" fill="#666"/><ellipse cx="30" cy="20" rx="13" ry="13" fill="#8DC63F"/><circle cx="30" cy="20" r="6" fill="#1a1a1a"/><circle cx="33" cy="17" r="2.5" fill="rgba(255,255,255,0.4)"/></svg></div>
     <span class="topbar-title">SERVICIO TÉCNICO</span>
   </div>
   <div class="topbar-nav">
@@ -385,7 +366,6 @@
 <div id="fidelizacionScreen" style="display:none;">
 <nav class="topbar">
   <div class="topbar-brand">
-    <div class="topbar-logo" style="background:transparent;width:40px;height:28px;"><svg viewBox="0 0 60 40" xmlns="http://www.w3.org/2000/svg"><path d="M2,20 Q15,2 30,8 Q45,2 58,20" fill="#4a4a4a"/><path d="M8,22 Q20,35 30,32 Q40,35 52,22 Q40,28 30,26 Q20,28 8,22Z" fill="#666"/><ellipse cx="30" cy="20" rx="13" ry="13" fill="#8DC63F"/><circle cx="30" cy="20" r="6" fill="#1a1a1a"/><circle cx="33" cy="17" r="2.5" fill="rgba(255,255,255,0.4)"/></svg></div>
     <span class="topbar-title">FIDELIZACIÓN</span>
   </div>
   <div class="topbar-nav">
