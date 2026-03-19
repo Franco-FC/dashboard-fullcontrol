@@ -187,7 +187,7 @@
     <h1>Panel de <span>Reportes</span></h1>
     <p>Seleccioná el área para ver el dashboard semanal correspondiente.</p>
     <div class="home-cards">
-      <div class="home-card servtec available" onclick="goTo('servtec')">
+      <div id="btnServtec" class="home-card servtec available">
         <div class="home-card-icon"><svg viewBox="0 0 24 24"><path d="M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z"/></svg></div>
         <h3>Servicio Técnico</h3>
         <p>KPIs semanales, órdenes por técnico, edificios atendidos y más.</p>
@@ -199,7 +199,7 @@
         <p>Seguimiento de proyectos, avances y equipos instalados por semana.</p>
         <span class="coming-soon">Próximamente</span>
       </div>
-      <div class="home-card fidelizacion available" onclick="goTo('fidelizacion')">
+      <div id="btnFidelizacion" class="home-card fidelizacion available">
         <div class="home-card-icon" style="background:var(--accent);"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3C9.5 3 8 4.5 8 4.5C6.5 3.5 4 4 3 6C2 8 3 10 4 11C3 12 3 14 4.5 15C4.5 17 6 18.5 8 18.5C8.5 19.5 10 21 12 21C14 21 15.5 19.5 16 18.5C18 18.5 19.5 17 19.5 15C21 14 21 12 20 11C21 10 22 8 21 6C20 4 17.5 3.5 16 4.5C16 4.5 14.5 3 12 3Z" stroke="var(--navy)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 3V21M8 4.5C8 4.5 8 8 10 10M16 4.5C16 4.5 16 8 14 10M4 11C4 11 7 11 10 13M20 11C20 11 17 11 14 13M4.5 15C4.5 15 7 15 10 16M19.5 15C19.5 15 17 15 14 16" stroke="var(--navy)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
         <h3>Fidelización</h3>
         <p>Métricas de retención y seguimiento semanal de Mauricio González.</p>
@@ -209,7 +209,7 @@
 
     <!-- Botón resumen efectividad -->
     <div style="max-width:860px;width:100%;margin-top:20px;">
-      <div onclick="goTo('resumen')" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);border-radius:16px;padding:1.25rem 2rem;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:16px;" onmouseover="this.style.background='rgba(255,255,255,.12)';this.style.borderColor='rgba(232,160,74,.6)'" onmouseout="this.style.background='rgba(255,255,255,.07)';this.style.borderColor='rgba(255,255,255,.15)'">
+      <div id="btnResumen" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);border-radius:16px;padding:1.25rem 2rem;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:16px;" onmouseover="this.style.background='rgba(255,255,255,.12)';this.style.borderColor='rgba(232,160,74,.6)'" onmouseout="this.style.background='rgba(255,255,255,.07)';this.style.borderColor='rgba(255,255,255,.15)'">
         <div style="width:44px;height:44px;background:rgba(232,160,74,.2);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         </div>
@@ -478,6 +478,9 @@ function goTo(s){
   if(s==='resumen') loadResumen();
   window.scrollTo(0,0);
 }
+document.getElementById('btnResumen').addEventListener('click', ()=>goTo('resumen'));
+document.getElementById('btnServtec').addEventListener('click', ()=>goTo('servtec'));
+document.getElementById('btnFidelizacion').addEventListener('click', ()=>goTo('fidelizacion'));
 function showUpload(){
   document.getElementById('dashboard').style.display='none';
   document.getElementById('evolucionScreen').style.display='none';
@@ -1418,8 +1421,6 @@ function renderResumen(){
     type:'bar',data:{labels:fidelWeeks.map(w=>w.label),datasets:[{label:'Mauricio González · Fidelización',data:fidelWeeks.map(w=>w.efectividad),backgroundColor:fidelWeeks.map(w=>w.efectividad>=100?'#1a7a56':w.efectividad>=70?'#2e6da4':'#c0392b'),borderRadius:4}]},
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{grid:{color:'#eef1f6'},beginAtZero:true,ticks:{callback:v=>v+'%'}}}}
   });
-}
-
 }
 
 // Firebase ready callback
