@@ -1344,108 +1344,82 @@ async function loadResumen(){
 
 function renderResumen(){
   const mesFiltro = document.getElementById('resumenMesFiltro').value;
-
   let stWeeks = mesFiltro==='todos' ? _resumenSTWeeks : _resumenSTWeeks.filter(w=>(w.mes||'Sin clasificar')===mesFiltro);
   let fidelWeeks = mesFiltro==='todos' ? _resumenFidelWeeks : _resumenFidelWeeks.filter(w=>(w.mes||'Sin clasificar')===mesFiltro);
-
-  // Unir todas las semanas únicas
   const allLabels = [...new Set([...stWeeks.map(w=>w.label), ...fidelWeeks.map(w=>w.label)])];
-  const allWeeksAll = [...stWeeks.map(w=>({...w,_src:'st'})), ...fidelWeeks.map(w=>({...w,_src:'fidel'}))];
   const sortedLabels = allLabels.sort((a,b)=>extractStartDate(a)-extractStartDate(b));
+  const soloST = ['Santiago Munhoz','Ariel Sandoval','Gonzalo Rodriguez','Marcos Martin'];
+  const instalacion = ['Lucas Espinosa','Ezequiel Wagner','Cristian Biglia'];
 
-  // Técnicos ST con datos
-  const stTecnicos = TECNICOS_CONFIG.filter(t=>t.areas.includes('st'));
+  function efCell(ef){
+    if(ef==null) return `<td style="color:var(--text-muted);text-align:center;">—</td>`;
+    const c=ef>=80?'#1a7a56':ef>=60?'#1565a8':'#c0392b';
+    return `<td style="text-align:center;font-weight:600;color:${c};">${ef}%</td>`;
+  }
+  function mauricioCell(stEf,fEf){
+    const stC=stEf!=null?(stEf>=80?'#1a7a56':stEf>=60?'#1565a8':'#c0392b'):'var(--text-muted)';
+    const fC=fEf!=null?(fEf>=100?'#1a7a56':fEf>=70?'#1565a8':'#c0392b'):'var(--text-muted)';
+    return `<td style="padding:4px 8px;"><div style="display:flex;flex-direction:column;gap:3px;min-width:90px;"><div style="display:flex;justify-content:space-between;align-items:center;gap:6px;"><span style="font-size:10px;color:var(--text-muted);font-weight:500;">ST</span><span style="font-weight:600;font-size:12px;color:${stC};">${stEf!=null?stEf+'%':'—'}</span></div><div style="border-top:1px solid var(--surface2);"></div><div style="display:flex;justify-content:space-between;align-items:center;gap:6px;"><span style="font-size:10px;color:var(--text-muted);font-weight:500;">Fidel</span><span style="font-weight:600;font-size:12px;color:${fC};">${fEf!=null?fEf+'%':'—'}</span></div></div></td>`;
+  }
 
-  // ── TABLA ──
-  // Agrupar por mes si es "todos"
-  let html = '';
-  const stCols = stTecnicos.filter(t=>!t.areas.includes('instalacion'));
-  const headerCols = stCols.map(t=>`<th style="color:white;font-size:10px;">${t.nombre.split(' ')[0]}<br><span style="font-weight:400;opacity:.7;">ST</span></th>`).join('') +
-    `<th style="color:white;font-size:10px;">Mauricio<br><span style="font-weight:400;opacity:.7;">Fidel.</span></th>` +
-    `<th style="color:white;font-size:10px;opacity:.5;">Marcos<br><span style="font-weight:400;opacity:.7;">Instalac.</span></th>` +
-    `<th style="color:white;font-size:10px;opacity:.5;">Gonzalo<br><span style="font-weight:400;opacity:.7;">Instalac.</span></th>` +
-    `<th style="color:white;font-size:10px;opacity:.5;">Lucas<br><span style="font-weight:400;opacity:.7;">Instalac.</span></th>` +
-    `<th style="color:white;font-size:10px;opacity:.5;">Ezequiel<br><span style="font-weight:400;opacity:.7;">Instalac.</span></th>` +
-    `<th style="color:white;font-size:10px;opacity:.5;">Cristian<br><span style="font-weight:400;opacity:.7;">Instalac.</span></th>`;
+  const headerRow=`<thead><tr><th rowspan="2" style="vertical-align:middle;">Semana</th>${soloST.map(n=>`<th rowspan="2" style="vertical-align:middle;color:white;font-size:10px;">${n.split(' ')[0]}<br><span style="font-weight:400;opacity:.7;">ST</span></th>`).join('')}<th style="color:white;font-size:10px;text-align:center;background:#1a5c3a;border-radius:4px 4px 0 0;">Mauricio González</th>${instalacion.map(n=>`<th rowspan="2" style="vertical-align:middle;color:white;font-size:10px;opacity:.5;">${n.split(' ')[0]}<br><span style="font-weight:400;opacity:.7;">Instalac.</span></th>`).join('')}</tr><tr><th style="background:#1a5c3a;"><div style="display:flex;justify-content:space-around;font-size:10px;color:rgba(255,255,255,.8);font-weight:400;"><span>ST</span><span>|</span><span>Fidel.</span></div></th></tr></thead>`;
 
+  let html='';
   if(mesFiltro==='todos'){
-    // Agrupar por mes
-    const byMes = {};
+    const byMes={};
     sortedLabels.forEach(lbl=>{
-      const stW = stWeeks.find(w=>w.label===lbl);
-      const fW = fidelWeeks.find(w=>w.label===lbl);
-      const mes = (stW||fW)?.mes || 'Sin clasificar';
-      if(!byMes[mes]) byMes[mes]=[];
-      byMes[mes].push(lbl);
+      const stW=stWeeks.find(w=>w.label===lbl);const fW=fidelWeeks.find(w=>w.label===lbl);
+      const mes=(stW||fW)?.mes||'Sin clasificar';
+      if(!byMes[mes])byMes[mes]=[];byMes[mes].push(lbl);
     });
-    const mesesSorted = Object.keys(byMes).sort((a,b)=>extractStartDate(byMes[a][0])-extractStartDate(byMes[b][0]));
-    html = `<thead><tr><th>Mes / Semana</th>${headerCols}</tr></thead><tbody>`;
+    const mesesSorted=Object.keys(byMes).sort((a,b)=>extractStartDate(byMes[a][0])-extractStartDate(byMes[b][0]));
+    html=headerRow+'<tbody>';
     mesesSorted.forEach(mes=>{
-      html += `<tr style="background:#1a3a5c;"><td style="color:white;font-weight:600;">📁 ${mes}</td>${stCols.map(()=>'<td style="color:rgba(255,255,255,.4);">—</td>').join('')}<td style="color:rgba(255,255,255,.4);">—</td><td colspan="5" style="color:rgba(255,255,255,.3);font-size:11px;font-style:italic;">Instalación · próximamente</td></tr>`;
+      const cols=1+soloST.length+1+instalacion.length;
+      html+=`<tr style="background:#1a3a5c;"><td colspan="${cols}" style="color:white;font-weight:600;">📁 ${mes}</td></tr>`;
       byMes[mes].forEach((lbl,i)=>{
-        const stW = stWeeks.find(w=>w.label===lbl);
-        const fW = fidelWeeks.find(w=>w.label===lbl);
-        const bg = i%2===0?'':'background:var(--surface)';
-        const efCell = (ef, color) => ef!=null
-          ? `<td style="font-weight:600;color:${ef>=80?'#1a7a56':ef>=60?'#1565a8':'#c0392b'}">${ef}%</td>`
-          : `<td style="color:var(--text-muted);">—</td>`;
-        html += `<tr style="${bg}"><td style="padding-left:20px;">↳ ${lbl}</td>`;
-        stCols.forEach(t=>{
-          const tec = stW?.tecnicos?.find(x=>x.nombre.toLowerCase().includes(t.nombre.toLowerCase().split(' ')[0]));
-          html += efCell(tec?tec.efect:null);
-        });
-        html += efCell(fW?fW.efectividad:null);
-        html += `<td style="color:var(--text-muted);font-size:11px;font-style:italic;">—</td><td style="color:var(--text-muted);font-size:11px;font-style:italic;">—</td><td style="color:var(--text-muted);font-size:11px;font-style:italic;">—</td><td style="color:var(--text-muted);font-size:11px;font-style:italic;">—</td><td style="color:var(--text-muted);font-size:11px;font-style:italic;">—</td>`;
-        html += `</tr>`;
+        const stW=stWeeks.find(w=>w.label===lbl);const fW=fidelWeeks.find(w=>w.label===lbl);
+        const bg=i%2===0?'':'background:var(--surface)';
+        html+=`<tr style="${bg}"><td style="padding-left:20px;">↳ ${lbl}</td>`;
+        soloST.forEach(n=>{const tec=stW?.tecnicos?.find(x=>x.nombre.toLowerCase().includes(n.toLowerCase().split(' ')[0]));html+=efCell(tec?tec.efect:null);});
+        const mST=stW?.tecnicos?.find(x=>x.nombre.toLowerCase().includes('mauricio'));
+        html+=mauricioCell(mST?mST.efect:null,fW?fW.efectividad:null);
+        instalacion.forEach(()=>{html+=`<td style="text-align:center;color:var(--text-muted);font-size:11px;font-style:italic;">—</td>`;});
+        html+='</tr>';
       });
     });
   } else {
-    html = `<thead><tr><th>Semana</th>${headerCols}</tr></thead><tbody>`;
+    html=headerRow+'<tbody>';
     sortedLabels.forEach((lbl,i)=>{
-      const stW = stWeeks.find(w=>w.label===lbl);
-      const fW = fidelWeeks.find(w=>w.label===lbl);
-      const bg = i%2===0?'':'background:var(--surface)';
-      html += `<tr style="${bg}"><td><strong>${lbl}</strong></td>`;
-      stCols.forEach(t=>{
-        const tec = stW?.tecnicos?.find(x=>x.nombre.toLowerCase().includes(t.nombre.toLowerCase().split(' ')[0]));
-        const ef = tec?tec.efect:null;
-        html += ef!=null ? `<td style="font-weight:600;color:${ef>=80?'#1a7a56':ef>=60?'#1565a8':'#c0392b'}">${ef}%</td>` : `<td style="color:var(--text-muted);">—</td>`;
-      });
-      const fEf = fW?fW.efectividad:null;
-      html += fEf!=null ? `<td style="font-weight:600;color:${fEf>=80?'#1a7a56':fEf>=60?'#1565a8':'#c0392b'}">${fEf}%</td>` : `<td style="color:var(--text-muted);">—</td>`;
-      html += `<td colspan="5" style="color:var(--text-muted);font-size:11px;font-style:italic;text-align:center;">Instalación · próximamente</td></tr>`;
+      const stW=stWeeks.find(w=>w.label===lbl);const fW=fidelWeeks.find(w=>w.label===lbl);
+      const bg=i%2===0?'':'background:var(--surface)';
+      html+=`<tr style="${bg}"><td><strong>${lbl}</strong></td>`;
+      soloST.forEach(n=>{const tec=stW?.tecnicos?.find(x=>x.nombre.toLowerCase().includes(n.toLowerCase().split(' ')[0]));html+=efCell(tec?tec.efect:null);});
+      const mST=stW?.tecnicos?.find(x=>x.nombre.toLowerCase().includes('mauricio'));
+      html+=mauricioCell(mST?mST.efect:null,fW?fW.efectividad:null);
+      instalacion.forEach(()=>{html+=`<td style="text-align:center;color:var(--text-muted);font-size:11px;font-style:italic;">—</td>`;});
+      html+='</tr>';
     });
   }
-  document.getElementById('resumenTabla').innerHTML = html + '</tbody>';
+  document.getElementById('resumenTabla').innerHTML=html+'</tbody>';
 
-  // ── GRÁFICO ST ──
   destroyChart('resumenST');
-  const stDatasets = stCols.map(t=>({
-    label: t.nombre,
-    data: sortedLabels.map(lbl=>{ const stW=stWeeks.find(w=>w.label===lbl); const tec=stW?.tecnicos?.find(x=>x.nombre.toLowerCase().includes(t.nombre.toLowerCase().split(' ')[0])); return tec?tec.efect:null; }),
-    borderColor: t.color, backgroundColor:'transparent', tension:.3, pointRadius:4, spanGaps:true
-  }));
-  charts['resumenST'] = new Chart(document.getElementById('resumenChartST'),{
-    type:'line', data:{labels:sortedLabels, datasets:stDatasets},
-    options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{position:'bottom',labels:{font:{size:10}}}},
-      scales:{x:{grid:{display:false}},y:{grid:{color:'#eef1f6'},beginAtZero:true,ticks:{callback:v=>v+'%'}}}}
+  const stColores={'Santiago Munhoz':'#2e6da4','Ariel Sandoval':'#e8a04a','Gonzalo Rodriguez':'#5340b8','Marcos Martin':'#c0392b','Mauricio Gonzales':'#1a7a56'};
+  charts['resumenST']=new Chart(document.getElementById('resumenChartST'),{
+    type:'line',data:{labels:sortedLabels,datasets:[...soloST,'Mauricio Gonzales'].map(n=>({
+      label:n,data:sortedLabels.map(lbl=>{const stW=stWeeks.find(w=>w.label===lbl);const tec=stW?.tecnicos?.find(x=>x.nombre.toLowerCase().includes(n.toLowerCase().split(' ')[0]));return tec?tec.efect:null;}),
+      borderColor:stColores[n]||'#888',backgroundColor:'transparent',tension:.3,pointRadius:4,spanGaps:true
+    }))},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:10}}}},scales:{x:{grid:{display:false}},y:{grid:{color:'#eef1f6'},beginAtZero:true,ticks:{callback:v=>v+'%'}}}}
   });
 
-  // ── GRÁFICO FIDEL ──
   destroyChart('resumenFidel');
-  charts['resumenFidel'] = new Chart(document.getElementById('resumenChartFidel'),{
-    type:'bar',
-    data:{labels:fidelWeeks.map(w=>w.label), datasets:[{
-      label:'% Efectividad Fidelización',
-      data:fidelWeeks.map(w=>w.efectividad),
-      backgroundColor:fidelWeeks.map(w=>w.efectividad>=100?'#1a7a56':w.efectividad>=70?'#2e6da4':'#c0392b'),
-      borderRadius:4
-    }]},
-    options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false}},
-      scales:{x:{grid:{display:false}},y:{grid:{color:'#eef1f6'},beginAtZero:true,ticks:{callback:v=>v+'%'}}}}
+  charts['resumenFidel']=new Chart(document.getElementById('resumenChartFidel'),{
+    type:'bar',data:{labels:fidelWeeks.map(w=>w.label),datasets:[{label:'Mauricio González · Fidelización',data:fidelWeeks.map(w=>w.efectividad),backgroundColor:fidelWeeks.map(w=>w.efectividad>=100?'#1a7a56':w.efectividad>=70?'#2e6da4':'#c0392b'),borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{grid:{color:'#eef1f6'},beginAtZero:true,ticks:{callback:v=>v+'%'}}}}
   });
+}
+
 }
 
 // Firebase ready callback
