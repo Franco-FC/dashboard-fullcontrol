@@ -23,7 +23,10 @@
   window._fb = {
     saveWeek:   (data) => db.collection('semanas_servtec').add(data),
     getWeeks:   async () => { const s = await db.collection('semanas_servtec').orderBy('timestamp','asc').get(); return s.docs.map(d=>({id:d.id,...d.data()})); },
-    deleteWeek: (id)  => db.collection('semanas_servtec').doc(id).delete()
+    deleteWeek: (id)  => db.collection('semanas_servtec').doc(id).delete(),
+    saveFidel:   (data) => db.collection('semanas_fidelizacion').add(data),
+    getFidel:   async () => { const s = await db.collection('semanas_fidelizacion').orderBy('timestamp','asc').get(); return s.docs.map(d=>({id:d.id,...d.data()})); },
+    deleteFidel: (id)  => db.collection('semanas_fidelizacion').doc(id).delete()
   };
   window.dispatchEvent(new Event('firebaseReady'));
 </script>
@@ -196,11 +199,11 @@
         <p>Seguimiento de proyectos, avances y equipos instalados por semana.</p>
         <span class="coming-soon">Próximamente</span>
       </div>
-      <div class="home-card fidelizacion">
-        <div class="home-card-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3C9.5 3 8 4.5 8 4.5C6.5 3.5 4 4 3 6C2 8 3 10 4 11C3 12 3 14 4.5 15C4.5 17 6 18.5 8 18.5C8.5 19.5 10 21 12 21C14 21 15.5 19.5 16 18.5C18 18.5 19.5 17 19.5 15C21 14 21 12 20 11C21 10 22 8 21 6C20 4 17.5 3.5 16 4.5C16 4.5 14.5 3 12 3Z" stroke="rgba(255,255,255,0.4)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 3V21M8 4.5C8 4.5 8 8 10 10M16 4.5C16 4.5 16 8 14 10M4 11C4 11 7 11 10 13M20 11C20 11 17 11 14 13M4.5 15C4.5 15 7 15 10 16M19.5 15C19.5 15 17 15 14 16" stroke="rgba(255,255,255,0.4)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="home-card fidelizacion available" onclick="goTo('fidelizacion')">
+        <div class="home-card-icon" style="background:var(--accent);"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3C9.5 3 8 4.5 8 4.5C6.5 3.5 4 4 3 6C2 8 3 10 4 11C3 12 3 14 4.5 15C4.5 17 6 18.5 8 18.5C8.5 19.5 10 21 12 21C14 21 15.5 19.5 16 18.5C18 18.5 19.5 17 19.5 15C21 14 21 12 20 11C21 10 22 8 21 6C20 4 17.5 3.5 16 4.5C16 4.5 14.5 3 12 3Z" stroke="var(--navy)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 3V21M8 4.5C8 4.5 8 8 10 10M16 4.5C16 4.5 16 8 14 10M4 11C4 11 7 11 10 13M20 11C20 11 17 11 14 13M4.5 15C4.5 15 7 15 10 16M19.5 15C19.5 15 17 15 14 16" stroke="var(--navy)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
         <h3>Fidelización</h3>
-        <p>Métricas de retención, satisfacción y seguimiento de clientes.</p>
-        <span class="coming-soon">Próximamente</span>
+        <p>Métricas de retención y seguimiento semanal de Mauricio González.</p>
+        <span class="arrow">Ingresar →</span>
       </div>
     </div>
   </div>
@@ -305,6 +308,92 @@
 
 </div><!-- servtecScreen -->
 
+<!-- FIDELIZACIÓN -->
+<div id="fidelizacionScreen" style="display:none;">
+<nav class="topbar">
+  <div class="topbar-brand">
+    <div class="topbar-logo"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3C9.5 3 8 4.5 8 4.5C6.5 3.5 4 4 3 6C2 8 3 10 4 11C3 12 3 14 4.5 15C4.5 17 6 18.5 8 18.5C8.5 19.5 10 21 12 21C14 21 15.5 19.5 16 18.5C18 18.5 19.5 17 19.5 15C21 14 21 12 20 11C21 10 22 8 21 6C20 4 17.5 3.5 16 4.5C16 4.5 14.5 3 12 3Z" stroke="var(--navy)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <span class="topbar-title">FIDELIZACIÓN</span>
+  </div>
+  <div class="topbar-nav">
+    <span class="topbar-period" id="fidelTopPeriod">—</span>
+    <button class="topbar-back" onclick="goTo('home')">← Inicio</button>
+  </div>
+</nav>
+
+<div id="fidelUploadScreen">
+  <div class="upload-card">
+    <div class="upload-icon-wrap"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3C9.5 3 8 4.5 8 4.5C6.5 3.5 4 4 3 6C2 8 3 10 4 11C3 12 3 14 4.5 15C4.5 17 6 18.5 8 18.5C8.5 19.5 10 21 12 21C14 21 15.5 19.5 16 18.5C18 18.5 19.5 17 19.5 15C21 14 21 12 20 11C21 10 22 8 21 6C20 4 17.5 3.5 16 4.5C16 4.5 14.5 3 12 3Z" stroke="var(--teal)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <h2>Cargar Semanas · Fidelización</h2>
+    <p>Subí uno o varios Excel. Los datos de Mauricio González se guardan en Firebase organizados por mes.</p>
+    <div class="dropzone" id="fidelDropzone">
+      <input type="file" id="fidelFileInput" accept=".xlsx,.xls" multiple />
+      <strong>Arrastrá los archivos aquí o hacé clic</strong>
+      <p>Podés subir múltiples semanas a la vez · .xlsx</p>
+    </div>
+    <div id="fidelConfigRows"></div>
+    <button class="btn-primary" id="fidelBtnGenerate" disabled>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
+      Guardar en Firebase y ver dashboard
+    </button>
+    <div class="status" id="fidelStatusMsg"></div>
+    <div id="fidelSavedSection" style="display:none;margin-top:1.5rem;border-top:1px solid var(--border);padding-top:1.25rem;text-align:left;">
+      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);margin-bottom:.75rem;">Semanas guardadas · Fidelización</div>
+      <div id="fidelSavedList"></div>
+      <button class="btn-secondary" id="fidelBtnEvolucion" style="margin-top:.75rem;width:100%;justify-content:center;display:none;">
+        📈 Ver evolución →
+      </button>
+    </div>
+  </div>
+</div>
+
+<div id="fidelDashboard" style="display:none;padding:1.75rem 2rem 3rem;max-width:1100px;margin:0 auto;">
+  <div class="dash-header">
+    <div>
+      <h1>Fidelización · Mauricio González</h1>
+      <span class="period-badge" id="fidelPeriod"></span>
+    </div>
+    <div class="dash-actions">
+      <button class="btn-secondary" id="fidelBtnReset">← Cargar otra semana</button>
+      <button class="btn-secondary" onclick="fidelShowEvolucion()">📈 Ver evolución</button>
+      <button class="btn-dl" id="fidelBtnDownload">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+        Descargar Excel
+      </button>
+    </div>
+  </div>
+  <div class="section-label">Indicadores clave</div>
+  <div class="kpi-grid" id="fidelKpiGrid"></div>
+  <div class="charts-row">
+    <div class="chart-card"><h3>Edificios visitados por día</h3><div class="chart-wrap-tall"><canvas id="fidelChartDias"></canvas></div></div>
+    <div class="chart-card"><h3>Top edificios visitados</h3><div class="chart-wrap-tall"><canvas id="fidelChartEdificios"></canvas></div></div>
+  </div>
+  <div class="section-label">Detalle de visitas</div>
+  <div class="table-card-full"><h3>Edificios visitados en la semana</h3><table class="dt" id="fidelTablaEdificios"></table></div>
+</div>
+
+<div id="fidelEvolucionScreen" style="display:none;padding:1.75rem 2rem 3rem;max-width:1100px;margin:0 auto;">
+  <div class="dash-header">
+    <div>
+      <h1>Evolución · Fidelización</h1>
+      <span class="period-badge" id="fidelEvolBadge">Mauricio González · todas las semanas</span>
+    </div>
+    <div class="dash-actions">
+      <button class="btn-secondary" onclick="fidelShowUpload()">← Volver</button>
+    </div>
+  </div>
+  <div style="margin-bottom:1.5rem;">
+    <div class="section-label">Filtrar por período</div>
+    <div id="fidelMesTabs" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+  </div>
+  <div class="chart-full"><h3>Edificios visitados semana a semana</h3><div style="position:relative;height:260px;"><canvas id="fidelChartEvolEdif"></canvas></div></div>
+  <div class="chart-full"><h3>% Efectividad semana a semana</h3><div style="position:relative;height:260px;"><canvas id="fidelChartEvolEfect"></canvas></div></div>
+  <div class="section-label">Comparativa por semana</div>
+  <div class="table-card-full"><h3>Resumen por semana</h3><table class="dt" id="fidelTablaEvolucion"></table></div>
+</div>
+
+</div><!-- fidelizacionScreen -->
+
 <script>
 const charts = {};
 function destroyChart(id){ if(charts[id]){charts[id].destroy();delete charts[id];} }
@@ -318,7 +407,9 @@ function toggleDetail(id){
 function goTo(s){
   document.getElementById('homeScreen').style.display=s==='home'?'flex':'none';
   document.getElementById('servtecScreen').style.display=s==='servtec'?'block':'none';
+  document.getElementById('fidelizacionScreen').style.display=s==='fidelizacion'?'block':'none';
   if(s==='servtec') loadSavedWeeks();
+  if(s==='fidelizacion') fidelLoadSavedWeeks();
   window.scrollTo(0,0);
 }
 function showUpload(){
@@ -801,8 +892,359 @@ function renderEvolucion(){
   document.getElementById('tablaEvolucion').innerHTML=html+'</tbody>';
 }
 
+// ── FIDELIZACIÓN ──
+const FIDEL_TECNICO = 'mauricio';
+const FIDEL_OBJETIVO_DIA = 7 / 5; // 1.4 edificios/día hábil
+
+const fidelDropzone = document.getElementById('fidelDropzone');
+const fidelFileInput = document.getElementById('fidelFileInput');
+const fidelBtnGenerate = document.getElementById('fidelBtnGenerate');
+const fidelStatusMsg = document.getElementById('fidelStatusMsg');
+let fidelPendingFiles = [];
+
+fidelDropzone.addEventListener('click', () => fidelFileInput.click());
+fidelDropzone.addEventListener('dragover', e => { e.preventDefault(); fidelDropzone.classList.add('drag'); });
+fidelDropzone.addEventListener('dragleave', () => fidelDropzone.classList.remove('drag'));
+fidelDropzone.addEventListener('drop', e => { e.preventDefault(); fidelDropzone.classList.remove('drag'); fidelHandleFiles(e.dataTransfer.files); });
+fidelFileInput.addEventListener('change', () => fidelHandleFiles(fidelFileInput.files));
+
+function fidelHandleFiles(files) {
+  fidelPendingFiles = [];
+  document.getElementById('fidelConfigRows').innerHTML = '';
+  fidelBtnGenerate.disabled = true;
+  if (!files.length) return;
+  let loaded = 0;
+  Array.from(files).forEach((file, i) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const wb = XLSX.read(e.target.result, { type: 'array', cellDates: true });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const raw = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null });
+        let headerRow = -1;
+        for (let j = 0; j < raw.length; j++) {
+          if (raw[j] && raw[j].some(v => v && String(v).toLowerCase().includes('número'))) { headerRow = j; break; }
+        }
+        if (headerRow === -1) { fidelStatusMsg.className = 'status err'; fidelStatusMsg.textContent = `${file.name}: formato no reconocido`; return; }
+        const headers = raw[headerRow];
+        const rows = raw.slice(headerRow + 1).filter(r => r && r[0] != null && String(r[0]).trim() !== '');
+        const df = rows.map(r => { const obj = {}; headers.forEach((h, k) => { if (h) obj[String(h).trim()] = r[k]; }); return obj; });
+        fidelPendingFiles[i] = { df, name: file.name };
+        fidelRenderConfig(i, file.name, df.filter(r => r['Tecnico'] && String(r['Tecnico']).toLowerCase().includes(FIDEL_TECNICO)).length);
+        loaded++;
+        if (loaded === files.length) { fidelBtnGenerate.disabled = false; fidelStatusMsg.className = 'status ok'; fidelStatusMsg.textContent = `✓ ${files.length} archivo(s) listos`; }
+      } catch (err) { fidelStatusMsg.className = 'status err'; fidelStatusMsg.textContent = 'Error: ' + err.message; }
+    };
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+function fidelRenderConfig(i, name, count) {
+  const div = document.createElement('div');
+  div.className = 'file-item';
+  div.innerHTML = `<span class="file-item-name">📄 ${name} <span style="color:var(--text-muted);font-weight:400;">(${count} OTs de Mauricio)</span></span>
+    <label>Mes/Año&nbsp;</label><input type="text" id="fidelMes_${i}" placeholder="ej: Marzo 2026" />
+    <label>&nbsp;Período&nbsp;</label><input type="text" id="fidelLabel_${i}" placeholder="Semana 2 · 09/03" />`;
+  document.getElementById('fidelConfigRows').appendChild(div);
+}
+
+fidelBtnGenerate.addEventListener('click', async () => {
+  if (!window._fb) { fidelStatusMsg.className = 'status err'; fidelStatusMsg.textContent = 'Firebase no disponible.'; return; }
+  fidelBtnGenerate.disabled = true;
+  fidelStatusMsg.className = 'status'; fidelStatusMsg.textContent = 'Guardando en Firebase...';
+  try {
+    for (let i = 0; i < fidelPendingFiles.length; i++) {
+      if (!fidelPendingFiles[i]) continue;
+      const { df } = fidelPendingFiles[i];
+      const label = document.getElementById(`fidelLabel_${i}`)?.value || `Semana ${i + 1}`;
+      const mes = document.getElementById(`fidelMes_${i}`)?.value || 'Sin clasificar';
+      const summary = fidelComputeSummary(df, label);
+      await window._fb.saveFidel({ ...summary, mes, timestamp: Date.now() });
+    }
+    fidelStatusMsg.className = 'status ok'; fidelStatusMsg.textContent = '✓ Guardado en Firebase';
+    fidelPendingFiles = [];
+    document.getElementById('fidelConfigRows').innerHTML = '';
+    fidelBtnGenerate.disabled = true;
+    const weeks = await window._fb.getFidel();
+    fidelRenderSavedWeeks(weeks);
+    if (weeks.length) fidelBuildDashboard(weeks[weeks.length - 1]);
+  } catch (err) {
+    fidelStatusMsg.className = 'status err'; fidelStatusMsg.textContent = 'Error: ' + err.message;
+    fidelBtnGenerate.disabled = false;
+  }
+});
+
+document.getElementById('fidelBtnReset').addEventListener('click', fidelShowUpload);
+document.getElementById('fidelBtnEvolucion').addEventListener('click', fidelShowEvolucion);
+
+function fidelShowUpload() {
+  document.getElementById('fidelDashboard').style.display = 'none';
+  document.getElementById('fidelEvolucionScreen').style.display = 'none';
+  document.getElementById('fidelUploadScreen').style.display = 'flex';
+  document.getElementById('fidelTopPeriod').textContent = '—';
+}
+
+async function fidelLoadSavedWeeks() {
+  if (!window._fb) { window.addEventListener('firebaseReady', fidelLoadSavedWeeks, { once: true }); return; }
+  try { const weeks = await window._fb.getFidel(); fidelRenderSavedWeeks(weeks); } catch (e) { console.error(e); }
+}
+
+function fidelRenderSavedWeeks(weeks) {
+  const section = document.getElementById('fidelSavedSection');
+  const list = document.getElementById('fidelSavedList');
+  const btnEvol = document.getElementById('fidelBtnEvolucion');
+  list.innerHTML = '';
+  if (!weeks.length) { section.style.display = 'none'; return; }
+  section.style.display = 'block';
+  btnEvol.style.display = weeks.length > 1 ? 'flex' : 'none';
+  const byMes = {};
+  weeks.forEach(w => { const m = w.mes || 'Sin clasificar'; if (!byMes[m]) byMes[m] = []; byMes[m].push(w); });
+  const mesesOrdenados = Object.keys(byMes).sort((a, b) => {
+    const aD = Math.min(...byMes[a].map(w => extractStartDate(w.label)));
+    const bD = Math.min(...byMes[b].map(w => extractStartDate(w.label)));
+    return aD - bD;
+  });
+  mesesOrdenados.forEach(mes => {
+    const folder = document.createElement('div');
+    folder.style.cssText = 'margin-bottom:4px;';
+    const fId = `fidel-folder-${mes.replace(/\s+/g, '-')}`;
+    folder.innerHTML = `
+      <div onclick="toggleFolder('${fId}')" style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--navy);border-radius:8px;cursor:pointer;">
+        <span id="${fId}-icon" style="font-size:13px;">📁</span>
+        <span style="flex:1;font-size:13px;font-weight:600;color:white;">${mes}</span>
+        <span style="font-size:11px;color:rgba(255,255,255,.5);">${byMes[mes].length} semana(s)</span>
+        <span id="${fId}-arrow" style="color:rgba(255,255,255,.5);font-size:11px;">▾</span>
+      </div>
+      <div id="${fId}" style="padding-left:12px;margin-top:4px;">
+        ${sortWeeks(byMes[mes]).map(w => `
+          <div class="saved-week-item" style="margin-bottom:4px;">
+            <div style="flex:1">
+              <div class="saved-week-label">📄 ${w.label}</div>
+              <div class="saved-week-sub">${w.edificiosVisitados} edificios · ${w.diasHabiles} días hábiles · ${w.efectividad}% efectividad</div>
+            </div>
+            <button class="btn-view-week" onclick='fidelBuildDashboard(${JSON.stringify(w).replace(/'/g, "&#39;")})'>Ver →</button>
+            <button class="btn-del-week" onclick='fidelDeleteWeek("${w.id}")'>✕</button>
+          </div>`).join('')}
+      </div>`;
+    list.appendChild(folder);
+  });
+}
+
+async function fidelDeleteWeek(id) {
+  if (!confirm('¿Eliminar esta semana?')) return;
+  await window._fb.deleteFidel(id);
+  const weeks = await window._fb.getFidel();
+  fidelRenderSavedWeeks(weeks);
+}
+
+// ── COMPUTE FIDELIZACIÓN ──
+function fidelComputeSummary(df, label) {
+  // Solo OTs de Mauricio
+  const dfMauricio = df.filter(r => r['Tecnico'] && String(r['Tecnico']).toLowerCase().includes(FIDEL_TECNICO));
+
+  // Días hábiles: fechas únicas de finalización, lunes a viernes
+  const diasSet = new Set();
+  dfMauricio.forEach(r => {
+    const fecha = r['Fecha de finalizacion'];
+    if (fecha) {
+      const d = fecha instanceof Date ? fecha : new Date(fecha);
+      if (!isNaN(d) && d.getDay() !== 0 && d.getDay() !== 6) diasSet.add(d.toDateString());
+    }
+  });
+  const diasHabiles = diasSet.size || 1;
+
+  // Edificios únicos visitados
+  const edSet = new Set();
+  dfMauricio.forEach(r => { if (r['Cuenta']) edSet.add(String(r['Cuenta']).trim()); });
+  const edificiosVisitados = edSet.size;
+
+  // % Efectividad: edificios / (objetivo_dia * dias_habiles) * 100
+  const objetivoSemana = FIDEL_OBJETIVO_DIA * diasHabiles;
+  const efectividad = parseFloat(((edificiosVisitados / objetivoSemana) * 100).toFixed(1));
+
+  // Detalle por edificio
+  const edMap = {};
+  dfMauricio.forEach(r => {
+    if (r['Cuenta']) {
+      const k = String(r['Cuenta']).trim();
+      edMap[k] = (edMap[k] || 0) + 1;
+    }
+  });
+  const topEdificios = Object.entries(edMap).sort((a, b) => b[1] - a[1]).map(([k, n]) => {
+    const m = k.match(/\(([^,)]+)/); const raw = m ? m[1].trim() : k.slice(0, 40);
+    return { label: raw.replace(/\s*N[°º]\s*/gi, ' ').trim(), cuenta: k, n };
+  });
+
+  // OTs por día de la semana
+  const dayMap = {};
+  dfMauricio.forEach(r => {
+    const d = parseDate(r['Fecha de Creación']); if (d) { const dow = d.getDay(); dayMap[dow] = (dayMap[dow] || 0) + 1; }
+  });
+
+  // Edificios únicos por día hábil
+  const edPorDia = {};
+  dfMauricio.forEach(r => {
+    const fecha = r['Fecha de finalizacion'];
+    if (fecha && r['Cuenta']) {
+      const d = fecha instanceof Date ? fecha : new Date(fecha);
+      if (!isNaN(d) && d.getDay() !== 0 && d.getDay() !== 6) {
+        const key = d.toDateString();
+        if (!edPorDia[key]) edPorDia[key] = new Set();
+        edPorDia[key].add(String(r['Cuenta']).trim());
+      }
+    }
+  });
+  const edPorDiaArr = Object.entries(edPorDia).sort((a, b) => new Date(a[0]) - new Date(b[0]))
+    .map(([d, s]) => { const dt = new Date(d); return { dia: DE[dt.getDay()] + ' ' + dt.getDate() + '/' + (dt.getMonth() + 1), n: s.size }; });
+
+  return { label, diasHabiles, edificiosVisitados, efectividad, objetivoSemana: parseFloat(objetivoSemana.toFixed(1)), topEdificios, edPorDiaArr, dayMap };
+}
+
+// ── BUILD FIDELIZACIÓN DASHBOARD ──
+function fidelBuildDashboard(w) {
+  document.getElementById('fidelUploadScreen').style.display = 'none';
+  document.getElementById('fidelEvolucionScreen').style.display = 'none';
+  document.getElementById('fidelDashboard').style.display = 'block';
+  document.getElementById('fidelPeriod').textContent = w.label;
+  document.getElementById('fidelTopPeriod').textContent = w.label;
+
+  // KPIs
+  const pctColor = w.efectividad >= 100 ? 'green' : w.efectividad >= 70 ? 'teal' : 'purple';
+  document.getElementById('fidelKpiGrid').innerHTML = [
+    { cls: 'navy', label: 'Edificios visitados', value: w.edificiosVisitados, sub: `objetivo: ${w.objetivoSemana.toFixed(1)} (${w.diasHabiles} días × 1.4)` },
+    { cls: pctColor, label: '% Efectividad', value: w.efectividad + '%', sub: `${w.edificiosVisitados} de ${w.objetivoSemana.toFixed(1)} objetivo` },
+    { cls: 'teal', label: 'Días hábiles trabajados', value: w.diasHabiles, sub: 'lunes a viernes con OTs' },
+    { cls: 'navy', label: 'Objetivo semanal base', value: '7', sub: '5 días × 1.4 edificios/día' },
+  ].map(k => `<div class="kpi-card ${k.cls}"><div class="kpi-label">${k.label}</div><div class="kpi-value">${k.value}</div><div class="kpi-sub">${k.sub}</div></div>`).join('');
+
+  // Chart edificios por día
+  destroyChart('fidelDias');
+  charts['fidelDias'] = new Chart(document.getElementById('fidelChartDias'), {
+    type: 'bar',
+    data: { labels: w.edPorDiaArr.map(d => d.dia), datasets: [{ data: w.edPorDiaArr.map(d => d.n), backgroundColor: '#2e6da4', borderRadius: 4, borderSkipped: false }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: { font: { size: 11 } } }, y: { grid: { color: '#eef1f6' }, ticks: { font: { size: 11 }, stepSize: 1 }, beginAtZero: true } } }
+  });
+
+  // Chart top edificios
+  const topEd = w.topEdificios.slice(0, 10);
+  destroyChart('fidelEdificios');
+  charts['fidelEdificios'] = new Chart(document.getElementById('fidelChartEdificios'), {
+    type: 'bar',
+    data: { labels: topEd.map(e => e.label.length > 25 ? e.label.slice(0, 23) + '…' : e.label), datasets: [{ data: topEd.map(e => e.n), backgroundColor: '#1a3a5c', borderRadius: 4, borderSkipped: false }] },
+    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { color: '#eef1f6' }, ticks: { font: { size: 11 } } }, y: { grid: { display: false }, ticks: { font: { size: 10 } } } } }
+  });
+
+  // Tabla edificios
+  let tHTML = '<thead><tr><th>Edificio</th><th>Visitas</th></tr></thead><tbody>';
+  w.topEdificios.forEach((e, i) => {
+    tHTML += `<tr><td style="${i % 2 === 0 ? '' : 'background:var(--surface)'}">${e.label}</td><td style="text-align:center;${i % 2 === 0 ? '' : 'background:var(--surface)'}">${e.n}</td></tr>`;
+  });
+  document.getElementById('fidelTablaEdificios').innerHTML = tHTML + '</tbody>';
+
+  document.getElementById('fidelBtnDownload').onclick = () => {
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([
+      ['KPI', 'Valor'],
+      ['Edificios visitados', w.edificiosVisitados],
+      ['% Efectividad', w.efectividad + '%'],
+      ['Días hábiles', w.diasHabiles],
+      ['Objetivo semana', w.objetivoSemana],
+    ]), 'KPIs');
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['Edificio', 'Visitas'], ...w.topEdificios.map(e => [e.label, e.n])]), 'Edificios');
+    XLSX.writeFile(wb, `Fidelizacion_${w.label.replace(/[\s\/]+/g, '_')}.xlsx`);
+  };
+}
+
+// ── EVOLUCIÓN FIDELIZACIÓN ──
+let _fidelAllWeeks = [];
+let _fidelMesActivo = 'todos';
+
+async function fidelShowEvolucion() {
+  if (!window._fb) return;
+  document.getElementById('fidelDashboard').style.display = 'none';
+  document.getElementById('fidelUploadScreen').style.display = 'none';
+  document.getElementById('fidelEvolucionScreen').style.display = 'block';
+  document.getElementById('fidelTopPeriod').textContent = 'Evolución';
+  window.scrollTo(0, 0);
+  const raw = await window._fb.getFidel();
+  _fidelAllWeeks = sortWeeks(raw);
+  _fidelMesActivo = 'todos';
+  fidelRenderMesTabs();
+  fidelRenderEvolucion();
+}
+
+function fidelRenderMesTabs() {
+  const mesesRaw = [...new Set(_fidelAllWeeks.map(w => w.mes || 'Sin clasificar'))];
+  const mesesOrdenados = mesesRaw.sort((a, b) => {
+    const aD = Math.min(..._fidelAllWeeks.filter(w => (w.mes || 'Sin clasificar') === a).map(w => extractStartDate(w.label)));
+    const bD = Math.min(..._fidelAllWeeks.filter(w => (w.mes || 'Sin clasificar') === b).map(w => extractStartDate(w.label)));
+    return aD - bD;
+  });
+  const meses = ['todos', ...mesesOrdenados];
+  document.getElementById('fidelMesTabs').innerHTML = meses.map(m => `
+    <button onclick="setFidelMes('${m}')" style="padding:6px 14px;border-radius:20px;border:1px solid var(--border);font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .15s;background:${m === _fidelMesActivo ? 'var(--navy)' : 'var(--white)'};color:${m === _fidelMesActivo ? 'white' : 'var(--text)'};">
+      ${m === 'todos' ? '📊 Todos los meses' : '📁 ' + m}
+    </button>`).join('');
+}
+
+function setFidelMes(mes) { _fidelMesActivo = mes; fidelRenderMesTabs(); fidelRenderEvolucion(); }
+
+function fidelRenderEvolucion() {
+  const weeks = _fidelMesActivo === 'todos' ? _fidelAllWeeks : _fidelAllWeeks.filter(w => (w.mes || 'Sin clasificar') === _fidelMesActivo);
+  if (!weeks.length) return;
+  document.getElementById('fidelEvolBadge').textContent = `Mauricio González · ${_fidelMesActivo === 'todos' ? 'todas las semanas' : _fidelMesActivo}`;
+  const labels = weeks.map(w => w.label);
+
+  destroyChart('fidelEvolEdif');
+  charts['fidelEvolEdif'] = new Chart(document.getElementById('fidelChartEvolEdif'), {
+    type: 'line',
+    data: { labels, datasets: [
+      { label: 'Edificios visitados', data: weeks.map(w => w.edificiosVisitados), borderColor: '#2e6da4', backgroundColor: 'rgba(46,109,164,.1)', tension: .3, pointRadius: 5, fill: true },
+      { label: 'Objetivo', data: weeks.map(w => w.objetivoSemana), borderColor: '#e8a04a', backgroundColor: 'transparent', borderDash: [6, 3], tension: 0, pointRadius: 3 }
+    ]},
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } }, scales: { x: { grid: { display: false } }, y: { grid: { color: '#eef1f6' }, beginAtZero: true } } }
+  });
+
+  destroyChart('fidelEvolEfect');
+  charts['fidelEvolEfect'] = new Chart(document.getElementById('fidelChartEvolEfect'), {
+    type: 'bar',
+    data: { labels, datasets: [{ label: '% Efectividad', data: weeks.map(w => w.efectividad), backgroundColor: weeks.map(w => w.efectividad >= 100 ? '#1a7a56' : w.efectividad >= 70 ? '#2e6da4' : '#c0392b'), borderRadius: 4 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { grid: { color: '#eef1f6' }, beginAtZero: true, ticks: { callback: v => v + '%' } } } }
+  });
+
+  // Tabla
+  let html = '';
+  if (_fidelMesActivo === 'todos') {
+    const byMes = {};
+    weeks.forEach(w => { const m = w.mes || 'Sin clasificar'; if (!byMes[m]) byMes[m] = []; byMes[m].push(w); });
+    const mesesSorted = Object.keys(byMes).sort((a, b) => Math.min(...byMes[a].map(w => extractStartDate(w.label))) - Math.min(...byMes[b].map(w => extractStartDate(w.label))));
+    html = `<thead><tr><th>Mes / Semana</th><th>Edificios</th><th>Objetivo</th><th>Días hábiles</th><th>% Efectividad</th></tr></thead><tbody>`;
+    mesesSorted.forEach(mes => {
+      const mW = sortWeeks(byMes[mes]);
+      const totEdif = mW.reduce((s, w) => s + w.edificiosVisitados, 0);
+      html += `<tr style="background:#1a3a5c;"><td style="color:white;font-weight:600;">📁 ${mes}</td><td style="color:white;font-weight:600;">${totEdif}</td><td colspan="3" style="color:rgba(255,255,255,.5);">—</td></tr>`;
+      mW.forEach((w, i) => {
+        const bg = i % 2 === 0 ? '' : 'background:var(--surface)';
+        const efColor = w.efectividad >= 100 ? 'color:#1a7a56;font-weight:600;' : w.efectividad >= 70 ? 'color:#1565a8;' : 'color:#c0392b;';
+        html += `<tr style="${bg}"><td style="padding-left:20px;">↳ ${w.label}</td><td>${w.edificiosVisitados}</td><td>${w.objetivoSemana.toFixed(1)}</td><td>${w.diasHabiles}</td><td style="${efColor}">${w.efectividad}%</td></tr>`;
+      });
+    });
+  } else {
+    html = `<thead><tr><th>Semana</th><th>Edificios</th><th>Objetivo</th><th>Días hábiles</th><th>% Efectividad</th></tr></thead><tbody>`;
+    weeks.forEach((w, i) => {
+      const bg = i % 2 === 0 ? '' : 'background:var(--surface)';
+      const efColor = w.efectividad >= 100 ? 'color:#1a7a56;font-weight:600;' : w.efectividad >= 70 ? 'color:#1565a8;' : 'color:#c0392b;';
+      html += `<tr style="${bg}"><td><strong>${w.label}</strong></td><td>${w.edificiosVisitados}</td><td>${w.objetivoSemana.toFixed(1)}</td><td>${w.diasHabiles}</td><td style="${efColor}">${w.efectividad}%</td></tr>`;
+    });
+  }
+  document.getElementById('fidelTablaEvolucion').innerHTML = html + '</tbody>';
+}
+
 // Firebase ready callback
-window.onFirebaseReady=()=>{ if(document.getElementById('servtecScreen').style.display!=='none') loadSavedWeeks(); };
+window.onFirebaseReady=()=>{
+  if(document.getElementById('servtecScreen').style.display!=='none') loadSavedWeeks();
+  if(document.getElementById('fidelizacionScreen').style.display!=='none') fidelLoadSavedWeeks();
+};
 </script>
 </body>
 </html>
