@@ -206,11 +206,70 @@
         <span class="arrow">Ingresar →</span>
       </div>
     </div>
+
+    <!-- Botón resumen efectividad -->
+    <div style="max-width:860px;width:100%;margin-top:20px;">
+      <div onclick="goTo('resumen')" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);border-radius:16px;padding:1.25rem 2rem;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:16px;" onmouseover="this.style.background='rgba(255,255,255,.12)';this.style.borderColor='rgba(232,160,74,.6)'" onmouseout="this.style.background='rgba(255,255,255,.07)';this.style.borderColor='rgba(255,255,255,.15)'">
+        <div style="width:44px;height:44px;background:rgba(232,160,74,.2);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <div style="flex:1;">
+          <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:white;margin-bottom:3px;">Resumen de Efectividad · Todos los Técnicos</div>
+          <div style="font-size:12px;color:rgba(255,255,255,.45);">Ariel Sandoval · Santiago Munhoz · Mauricio González · Marcos Martin · Gonzalo Rodriguez · Lucas Espinosa · Ezequiel Wagner · Cristian Biglia</div>
+        </div>
+        <span style="font-size:12px;font-weight:600;color:var(--accent);">Ver tabla →</span>
+      </div>
+    </div>
+
   </div>
   <div class="home-footer">Full Control · Sistema de Reportes Internos</div>
 </div>
 
-<!-- SERVICIO TÉCNICO -->
+<!-- RESUMEN EFECTIVIDAD -->
+<div id="resumenScreen" style="display:none;">
+<nav class="topbar">
+  <div class="topbar-brand">
+    <div class="topbar-logo"><svg viewBox="0 0 24 24" fill="white"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4" fill="white"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+    <span class="topbar-title">RESUMEN · TODOS LOS TÉCNICOS</span>
+  </div>
+  <div class="topbar-nav">
+    <button class="topbar-back" onclick="goTo('home')">← Inicio</button>
+  </div>
+</nav>
+
+<div id="resumenContent" style="padding:1.75rem 2rem 3rem;max-width:1100px;margin:0 auto;">
+
+  <!-- Filtro período -->
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:1.5rem;">
+    <div>
+      <h1 style="font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:var(--navy);">Efectividad · Todos los Técnicos</h1>
+      <span style="font-size:12px;color:var(--text-muted);">Datos de Servicio Técnico y Fidelización · ordenados cronológicamente</span>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+      <select id="resumenMesFiltro" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);cursor:pointer;" onchange="renderResumen()">
+        <option value="todos">📊 Todos los meses</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="section-label">Tabla comparativa por semana</div>
+  <div class="table-card-full">
+    <h3>% Efectividad por técnico</h3>
+    <table class="dt" id="resumenTabla"></table>
+  </div>
+
+  <div class="section-label">Evolución por técnico</div>
+  <div class="chart-full">
+    <h3>% Efectividad · Servicio Técnico</h3>
+    <div style="position:relative;height:280px;"><canvas id="resumenChartST"></canvas></div>
+  </div>
+  <div class="chart-full">
+    <h3>% Efectividad · Fidelización (Mauricio González)</h3>
+    <div style="position:relative;height:220px;"><canvas id="resumenChartFidel"></canvas></div>
+  </div>
+
+</div>
+</div>
 <div id="servtecScreen" style="display:none;">
 <nav class="topbar">
   <div class="topbar-brand">
@@ -408,6 +467,7 @@ function goTo(s){
   document.getElementById('homeScreen').style.display=s==='home'?'flex':'none';
   document.getElementById('servtecScreen').style.display=s==='servtec'?'block':'none';
   document.getElementById('fidelizacionScreen').style.display=s==='fidelizacion'?'block':'none';
+  document.getElementById('resumenScreen').style.display=s==='resumen'?'block':'none';
   if(s==='servtec') loadSavedWeeks();
   if(s==='fidelizacion'){
     document.getElementById('fidelUploadScreen').style.display='flex';
@@ -415,6 +475,7 @@ function goTo(s){
     document.getElementById('fidelEvolucionScreen').style.display='none';
     fidelLoadSavedWeeks();
   }
+  if(s==='resumen') loadResumen();
   window.scrollTo(0,0);
 }
 function showUpload(){
@@ -1243,6 +1304,148 @@ function fidelRenderEvolucion() {
     });
   }
   document.getElementById('fidelTablaEvolucion').innerHTML = html + '</tbody>';
+}
+
+// ── RESUMEN EFECTIVIDAD ──
+const TECNICOS_CONFIG = [
+  { nombre: 'Santiago Munhoz',   areas: ['st'],        color: '#2e6da4' },
+  { nombre: 'Ariel Sandoval',    areas: ['st'],        color: '#e8a04a' },
+  { nombre: 'Mauricio Gonzales', areas: ['st','fidel'],color: '#1a7a56' },
+  { nombre: 'Gonzalo Rodriguez', areas: ['st'],        color: '#5340b8' },
+  { nombre: 'Marcos Martin',     areas: ['st'],        color: '#c0392b' },
+  { nombre: 'Lucas Espinosa',    areas: ['instalacion'],color:'#0f2540' },
+  { nombre: 'Ezequiel Wagner',   areas: ['instalacion'],color:'#7b5ea7' },
+  { nombre: 'Cristian Biglia',   areas: ['instalacion'],color:'#3d7a8a' },
+];
+
+let _resumenSTWeeks = [];
+let _resumenFidelWeeks = [];
+
+async function loadResumen(){
+  if(!window._fb) { window.addEventListener('firebaseReady', loadResumen, {once:true}); return; }
+  try {
+    _resumenSTWeeks = sortWeeks(await window._fb.getWeeks());
+    _resumenFidelWeeks = sortWeeks(await window._fb.getFidel());
+    // Populate month filter
+    const allMeses = [...new Set([
+      ..._resumenSTWeeks.map(w=>w.mes||'Sin clasificar'),
+      ..._resumenFidelWeeks.map(w=>w.mes||'Sin clasificar')
+    ])].sort((a,b)=>{
+      const aD = Math.min(...[..._resumenSTWeeks,..._resumenFidelWeeks].filter(w=>(w.mes||'Sin clasificar')===a).map(w=>extractStartDate(w.label)));
+      const bD = Math.min(...[..._resumenSTWeeks,..._resumenFidelWeeks].filter(w=>(w.mes||'Sin clasificar')===b).map(w=>extractStartDate(w.label)));
+      return aD-bD;
+    });
+    const sel = document.getElementById('resumenMesFiltro');
+    sel.innerHTML = '<option value="todos">📊 Todos los meses</option>' +
+      allMeses.map(m=>`<option value="${m}">📁 ${m}</option>`).join('');
+    renderResumen();
+  } catch(e){ console.error(e); }
+}
+
+function renderResumen(){
+  const mesFiltro = document.getElementById('resumenMesFiltro').value;
+
+  let stWeeks = mesFiltro==='todos' ? _resumenSTWeeks : _resumenSTWeeks.filter(w=>(w.mes||'Sin clasificar')===mesFiltro);
+  let fidelWeeks = mesFiltro==='todos' ? _resumenFidelWeeks : _resumenFidelWeeks.filter(w=>(w.mes||'Sin clasificar')===mesFiltro);
+
+  // Unir todas las semanas únicas
+  const allLabels = [...new Set([...stWeeks.map(w=>w.label), ...fidelWeeks.map(w=>w.label)])];
+  const allWeeksAll = [...stWeeks.map(w=>({...w,_src:'st'})), ...fidelWeeks.map(w=>({...w,_src:'fidel'}))];
+  const sortedLabels = allLabels.sort((a,b)=>extractStartDate(a)-extractStartDate(b));
+
+  // Técnicos ST con datos
+  const stTecnicos = TECNICOS_CONFIG.filter(t=>t.areas.includes('st'));
+
+  // ── TABLA ──
+  // Agrupar por mes si es "todos"
+  let html = '';
+  const stCols = stTecnicos.filter(t=>!t.areas.includes('instalacion'));
+  const headerCols = stCols.map(t=>`<th style="color:white;font-size:10px;">${t.nombre.split(' ')[0]}<br><span style="font-weight:400;opacity:.7;">ST</span></th>`).join('') +
+    `<th style="color:white;font-size:10px;">Mauricio<br><span style="font-weight:400;opacity:.7;">Fidel.</span></th>` +
+    `<th style="color:white;font-size:10px;opacity:.5;">Marcos<br><span style="font-weight:400;opacity:.7;">Instalac.</span></th>` +
+    `<th style="color:white;font-size:10px;opacity:.5;">Gonzalo<br><span style="font-weight:400;opacity:.7;">Instalac.</span></th>` +
+    `<th style="color:white;font-size:10px;opacity:.5;">Lucas<br><span style="font-weight:400;opacity:.7;">Instalac.</span></th>` +
+    `<th style="color:white;font-size:10px;opacity:.5;">Ezequiel<br><span style="font-weight:400;opacity:.7;">Instalac.</span></th>` +
+    `<th style="color:white;font-size:10px;opacity:.5;">Cristian<br><span style="font-weight:400;opacity:.7;">Instalac.</span></th>`;
+
+  if(mesFiltro==='todos'){
+    // Agrupar por mes
+    const byMes = {};
+    sortedLabels.forEach(lbl=>{
+      const stW = stWeeks.find(w=>w.label===lbl);
+      const fW = fidelWeeks.find(w=>w.label===lbl);
+      const mes = (stW||fW)?.mes || 'Sin clasificar';
+      if(!byMes[mes]) byMes[mes]=[];
+      byMes[mes].push(lbl);
+    });
+    const mesesSorted = Object.keys(byMes).sort((a,b)=>extractStartDate(byMes[a][0])-extractStartDate(byMes[b][0]));
+    html = `<thead><tr><th>Mes / Semana</th>${headerCols}</tr></thead><tbody>`;
+    mesesSorted.forEach(mes=>{
+      html += `<tr style="background:#1a3a5c;"><td style="color:white;font-weight:600;">📁 ${mes}</td>${stCols.map(()=>'<td style="color:rgba(255,255,255,.4);">—</td>').join('')}<td style="color:rgba(255,255,255,.4);">—</td><td colspan="5" style="color:rgba(255,255,255,.3);font-size:11px;font-style:italic;">Instalación · próximamente</td></tr>`;
+      byMes[mes].forEach((lbl,i)=>{
+        const stW = stWeeks.find(w=>w.label===lbl);
+        const fW = fidelWeeks.find(w=>w.label===lbl);
+        const bg = i%2===0?'':'background:var(--surface)';
+        const efCell = (ef, color) => ef!=null
+          ? `<td style="font-weight:600;color:${ef>=80?'#1a7a56':ef>=60?'#1565a8':'#c0392b'}">${ef}%</td>`
+          : `<td style="color:var(--text-muted);">—</td>`;
+        html += `<tr style="${bg}"><td style="padding-left:20px;">↳ ${lbl}</td>`;
+        stCols.forEach(t=>{
+          const tec = stW?.tecnicos?.find(x=>x.nombre.toLowerCase().includes(t.nombre.toLowerCase().split(' ')[0]));
+          html += efCell(tec?tec.efect:null);
+        });
+        html += efCell(fW?fW.efectividad:null);
+        html += `<td style="color:var(--text-muted);font-size:11px;font-style:italic;">—</td><td style="color:var(--text-muted);font-size:11px;font-style:italic;">—</td><td style="color:var(--text-muted);font-size:11px;font-style:italic;">—</td><td style="color:var(--text-muted);font-size:11px;font-style:italic;">—</td><td style="color:var(--text-muted);font-size:11px;font-style:italic;">—</td>`;
+        html += `</tr>`;
+      });
+    });
+  } else {
+    html = `<thead><tr><th>Semana</th>${headerCols}</tr></thead><tbody>`;
+    sortedLabels.forEach((lbl,i)=>{
+      const stW = stWeeks.find(w=>w.label===lbl);
+      const fW = fidelWeeks.find(w=>w.label===lbl);
+      const bg = i%2===0?'':'background:var(--surface)';
+      html += `<tr style="${bg}"><td><strong>${lbl}</strong></td>`;
+      stCols.forEach(t=>{
+        const tec = stW?.tecnicos?.find(x=>x.nombre.toLowerCase().includes(t.nombre.toLowerCase().split(' ')[0]));
+        const ef = tec?tec.efect:null;
+        html += ef!=null ? `<td style="font-weight:600;color:${ef>=80?'#1a7a56':ef>=60?'#1565a8':'#c0392b'}">${ef}%</td>` : `<td style="color:var(--text-muted);">—</td>`;
+      });
+      const fEf = fW?fW.efectividad:null;
+      html += fEf!=null ? `<td style="font-weight:600;color:${fEf>=80?'#1a7a56':fEf>=60?'#1565a8':'#c0392b'}">${fEf}%</td>` : `<td style="color:var(--text-muted);">—</td>`;
+      html += `<td colspan="5" style="color:var(--text-muted);font-size:11px;font-style:italic;text-align:center;">Instalación · próximamente</td></tr>`;
+    });
+  }
+  document.getElementById('resumenTabla').innerHTML = html + '</tbody>';
+
+  // ── GRÁFICO ST ──
+  destroyChart('resumenST');
+  const stDatasets = stCols.map(t=>({
+    label: t.nombre,
+    data: sortedLabels.map(lbl=>{ const stW=stWeeks.find(w=>w.label===lbl); const tec=stW?.tecnicos?.find(x=>x.nombre.toLowerCase().includes(t.nombre.toLowerCase().split(' ')[0])); return tec?tec.efect:null; }),
+    borderColor: t.color, backgroundColor:'transparent', tension:.3, pointRadius:4, spanGaps:true
+  }));
+  charts['resumenST'] = new Chart(document.getElementById('resumenChartST'),{
+    type:'line', data:{labels:sortedLabels, datasets:stDatasets},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom',labels:{font:{size:10}}}},
+      scales:{x:{grid:{display:false}},y:{grid:{color:'#eef1f6'},beginAtZero:true,ticks:{callback:v=>v+'%'}}}}
+  });
+
+  // ── GRÁFICO FIDEL ──
+  destroyChart('resumenFidel');
+  charts['resumenFidel'] = new Chart(document.getElementById('resumenChartFidel'),{
+    type:'bar',
+    data:{labels:fidelWeeks.map(w=>w.label), datasets:[{
+      label:'% Efectividad Fidelización',
+      data:fidelWeeks.map(w=>w.efectividad),
+      backgroundColor:fidelWeeks.map(w=>w.efectividad>=100?'#1a7a56':w.efectividad>=70?'#2e6da4':'#c0392b'),
+      borderRadius:4
+    }]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{x:{grid:{display:false}},y:{grid:{color:'#eef1f6'},beginAtZero:true,ticks:{callback:v=>v+'%'}}}}
+  });
 }
 
 // Firebase ready callback
