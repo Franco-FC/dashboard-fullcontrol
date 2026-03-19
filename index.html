@@ -1058,8 +1058,8 @@ function fidelComputeSummary(df, label) {
   dfMauricio.forEach(r => { if (r['Cuenta']) edSet.add(String(r['Cuenta']).trim()); });
   const edificiosVisitados = edSet.size;
 
-  // % Efectividad: edificios / (objetivo_dia * dias_habiles) * 100
-  const objetivoSemana = FIDEL_OBJETIVO_DIA * diasHabiles;
+  // % Efectividad: edificios / objetivo redondeado * 100
+  const objetivoSemana = Math.round(FIDEL_OBJETIVO_DIA * diasHabiles);
   const efectividad = parseFloat(((edificiosVisitados / objetivoSemana) * 100).toFixed(1));
 
   // Detalle por edificio
@@ -1097,7 +1097,7 @@ function fidelComputeSummary(df, label) {
   const edPorDiaArr = Object.entries(edPorDia).sort((a, b) => new Date(a[0]) - new Date(b[0]))
     .map(([d, s]) => { const dt = new Date(d); return { dia: DE[dt.getDay()] + ' ' + dt.getDate() + '/' + (dt.getMonth() + 1), n: s.size }; });
 
-  return { label, diasHabiles, edificiosVisitados, efectividad, objetivoSemana: parseFloat(objetivoSemana.toFixed(1)), topEdificios, edPorDiaArr, dayMap };
+  return { label, diasHabiles, edificiosVisitados, efectividad, objetivoSemana, topEdificios, edPorDiaArr, dayMap };
 }
 
 // ── BUILD FIDELIZACIÓN DASHBOARD ──
@@ -1111,8 +1111,8 @@ function fidelBuildDashboard(w) {
   // KPIs
   const pctColor = w.efectividad >= 100 ? 'green' : w.efectividad >= 70 ? 'teal' : 'purple';
   document.getElementById('fidelKpiGrid').innerHTML = [
-    { cls: 'navy', label: 'Edificios visitados', value: w.edificiosVisitados, sub: `objetivo: ${w.objetivoSemana.toFixed(1)} (${w.diasHabiles} días × 1.4)` },
-    { cls: pctColor, label: '% Efectividad', value: w.efectividad + '%', sub: `${w.edificiosVisitados} de ${w.objetivoSemana.toFixed(1)} objetivo` },
+    { cls: 'navy', label: 'Edificios visitados', value: w.edificiosVisitados, sub: `objetivo: ${w.objetivoSemana} (${w.diasHabiles} días × 1.4)` },
+    { cls: pctColor, label: '% Efectividad', value: w.efectividad + '%', sub: `${w.edificiosVisitados} de ${w.objetivoSemana} objetivo` },
     { cls: 'teal', label: 'Días hábiles trabajados', value: w.diasHabiles, sub: 'lunes a viernes con OTs' },
     { cls: 'navy', label: 'Objetivo semanal base', value: '7', sub: '5 días × 1.4 edificios/día' },
   ].map(k => `<div class="kpi-card ${k.cls}"><div class="kpi-label">${k.label}</div><div class="kpi-value">${k.value}</div><div class="kpi-sub">${k.sub}</div></div>`).join('');
@@ -1226,7 +1226,7 @@ function fidelRenderEvolucion() {
       mW.forEach((w, i) => {
         const bg = i % 2 === 0 ? '' : 'background:var(--surface)';
         const efColor = w.efectividad >= 100 ? 'color:#1a7a56;font-weight:600;' : w.efectividad >= 70 ? 'color:#1565a8;' : 'color:#c0392b;';
-        html += `<tr style="${bg}"><td style="padding-left:20px;">↳ ${w.label}</td><td>${w.edificiosVisitados}</td><td>${w.objetivoSemana.toFixed(1)}</td><td>${w.diasHabiles}</td><td style="${efColor}">${w.efectividad}%</td></tr>`;
+        html += `<tr style="${bg}"><td style="padding-left:20px;">↳ ${w.label}</td><td>${w.edificiosVisitados}</td><td>${w.objetivoSemana}</td><td>${w.diasHabiles}</td><td style="${efColor}">${w.efectividad}%</td></tr>`;
       });
     });
   } else {
@@ -1234,7 +1234,7 @@ function fidelRenderEvolucion() {
     weeks.forEach((w, i) => {
       const bg = i % 2 === 0 ? '' : 'background:var(--surface)';
       const efColor = w.efectividad >= 100 ? 'color:#1a7a56;font-weight:600;' : w.efectividad >= 70 ? 'color:#1565a8;' : 'color:#c0392b;';
-      html += `<tr style="${bg}"><td><strong>${w.label}</strong></td><td>${w.edificiosVisitados}</td><td>${w.objetivoSemana.toFixed(1)}</td><td>${w.diasHabiles}</td><td style="${efColor}">${w.efectividad}%</td></tr>`;
+      html += `<tr style="${bg}"><td><strong>${w.label}</strong></td><td>${w.edificiosVisitados}</td><td>${w.objetivoSemana}</td><td>${w.diasHabiles}</td><td style="${efColor}">${w.efectividad}%</td></tr>`;
     });
   }
   document.getElementById('fidelTablaEvolucion').innerHTML = html + '</tbody>';
