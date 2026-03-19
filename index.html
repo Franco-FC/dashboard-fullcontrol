@@ -260,11 +260,14 @@
 
   <div class="section-label">Evolución por técnico</div>
   <div class="chart-full">
-    <h3>% Efectividad · Servicio Técnico</h3>
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:1rem;">
+      <h3 style="margin:0;">% Efectividad · Servicio Técnico</h3>
+      <div id="stTecFiltros" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+    </div>
     <div style="position:relative;height:280px;"><canvas id="resumenChartST"></canvas></div>
   </div>
   <div class="chart-full">
-    <h3>% Efectividad · Fidelización (Mauricio González)</h3>
+    <h3>% Efectividad · Fidelización</h3>
     <div style="position:relative;height:220px;"><canvas id="resumenChartFidel"></canvas></div>
   </div>
 
@@ -1434,29 +1437,65 @@ function renderResumen(){
   }
   document.getElementById('resumenTabla').innerHTML=html+'</tbody>';
 
-  // ── GRÁFICO ST ──
-  destroyChart('resumenST');
+  // ── GRÁFICO ST con checkboxes ──
   const stColores={'Santiago Munhoz':'#2e6da4','Ariel Sandoval':'#e8a04a','Mauricio Gonzales':'#1a7a56','Gonzalo Rodriguez':'#5340b8','Marcos Martin':'#c0392b'};
-  charts['resumenST']=new Chart(document.getElementById('resumenChartST'),{
-    type:'line',data:{labels:sortedLabels,datasets:stCols.map(n=>({
-      label:n,
-      data:sortedLabels.map(lbl=>{const stW=stWeeks.find(w=>w.label===lbl);return getTecEf(stW,n);}),
-      borderColor:stColores[n]||'#888',backgroundColor:'transparent',tension:.3,pointRadius:4,spanGaps:true
-    }))},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:10}}}},scales:{x:{grid:{display:false}},y:{grid:{color:'#eef1f6'},beginAtZero:true,ticks:{callback:v=>v+'%'}}}}
-  });
 
-  // ── GRÁFICO FIDEL ──
+  // Render checkboxes
+  const filtrosEl = document.getElementById('stTecFiltros');
+  if(filtrosEl){
+    // Keep existing selection state or default all on
+    const prevState = {};
+    filtrosEl.querySelectorAll('input[type=checkbox]').forEach(cb=>{ prevState[cb.dataset.tec]=cb.checked; });
+    filtrosEl.innerHTML = stCols.map(n=>{
+      const checked = prevState[n]!==undefined ? prevState[n] : true;
+      const col = stColores[n]||'#888';
+      return `<label style="display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:3px 10px;">
+        <input type="checkbox" data-tec="${n}" ${checked?'checked':''} onchange="updateSTChart()" style="accent-color:${col};cursor:pointer;"/>
+        <span style="color:var(--text);">${n.split(' ')[0]}</span>
+      </label>`;
+    }).join('');
+  }
+
+  function buildSTChart(labels, stW_map){
+    const filtrosEl2 = document.getElementById('stTecFiltros');
+    const activeNames = stCols.filter(n=>{
+      if(!filtrosEl2) return true;
+      const cb = filtrosEl2.querySelector(`input[data-tec="${n}"]`);
+      return cb ? cb.checked : true;
+    });
+    destroyChart('resumenST');
+    charts['resumenST']=new Chart(document.getElementById('resumenChartST'),{
+      type:'line',data:{labels,datasets:activeNames.map(n=>({
+        label:n,
+        data:labels.map(lbl=>getTecEf(stW_map[lbl],n)),
+        borderColor:stColores[n]||'#888',backgroundColor:'transparent',tension:.3,pointRadius:4,spanGaps:true
+      }))},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{position:'bottom',labels:{font:{size:10}}}},
+        scales:{x:{grid:{display:false}},y:{grid:{color:'#eef1f6'},beginAtZero:true,ticks:{callback:v=>v+'%'}}}}
+    });
+  }
+
+  // Map for quick access
+  const stW_map = {};
+  sortedLabels.forEach(lbl=>{ stW_map[lbl]=stWeeks.find(w=>w.label===lbl); });
+  buildSTChart(sortedLabels, stW_map);
+
+  // Expose updateSTChart globally so checkboxes can call it
+  window.updateSTChart = () => buildSTChart(sortedLabels, stW_map);
+
+  // ── GRÁFICO FIDEL (línea igual que ST) ──
   destroyChart('resumenFidel');
   if(fidelWeeks.length){
     charts['resumenFidel']=new Chart(document.getElementById('resumenChartFidel'),{
-      type:'bar',data:{labels:fidelWeeks.map(w=>w.label),datasets:[{
-        label:'Mauricio González · Fidelización',
+      type:'line',data:{labels:fidelWeeks.map(w=>w.label),datasets:[{
+        label:'Mauricio González',
         data:fidelWeeks.map(w=>w.efectividad),
-        backgroundColor:fidelWeeks.map(w=>w.efectividad>=100?'#1a7a56':w.efectividad>=70?'#2e6da4':'#c0392b'),
-        borderRadius:4
+        borderColor:'#1a7a56',backgroundColor:'rgba(26,122,86,.08)',tension:.3,pointRadius:5,fill:true,spanGaps:true
       }]},
-      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{grid:{color:'#eef1f6'},beginAtZero:true,ticks:{callback:v=>v+'%'}}}}
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{position:'bottom',labels:{font:{size:10}}}},
+        scales:{x:{grid:{display:false}},y:{grid:{color:'#eef1f6'},beginAtZero:true,ticks:{callback:v=>v+'%'}}}}
     });
   }
 }
