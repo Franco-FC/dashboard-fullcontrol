@@ -1351,77 +1351,116 @@ function renderResumen(){
   let fidelWeeks = mesFiltro==='todos' ? _resumenFidelWeeks : _resumenFidelWeeks.filter(w=>(w.mes||'Sin clasificar')===mesFiltro);
   const allLabels = [...new Set([...stWeeks.map(w=>w.label), ...fidelWeeks.map(w=>w.label)])];
   const sortedLabels = allLabels.sort((a,b)=>extractStartDate(a)-extractStartDate(b));
-  const soloST = ['Santiago Munhoz','Ariel Sandoval','Gonzalo Rodriguez','Marcos Martin'];
-  const instalacion = ['Lucas Espinosa','Ezequiel Wagner','Cristian Biglia'];
 
-  function efCell(ef){
-    if(ef==null) return `<td style="color:var(--text-muted);text-align:center;">—</td>`;
+  // Columnas ST (incluye Mauricio)
+  const stCols = ['Santiago Munhoz','Ariel Sandoval','Mauricio Gonzales','Gonzalo Rodriguez','Marcos Martin'];
+  // Columnas Fidelizacion (incluye Mauricio)
+  const fidelCols = ['Mauricio Gonzales'];
+  // Columnas Instalacion
+  const instCols = ['Lucas Espinosa','Ezequiel Wagner','Cristian Biglia'];
+
+  function efCell(ef, isInst){
+    if(isInst) return `<td style="text-align:center;color:var(--text-muted);font-size:11px;font-style:italic;">—</td>`;
+    if(ef==null) return `<td style="text-align:center;color:var(--text-muted);">—</td>`;
     const c=ef>=80?'#1a7a56':ef>=60?'#1565a8':'#c0392b';
     return `<td style="text-align:center;font-weight:600;color:${c};">${ef}%</td>`;
   }
-  function mauricioCell(stEf,fEf){
-    const stC=stEf!=null?(stEf>=80?'#1a7a56':stEf>=60?'#1565a8':'#c0392b'):'var(--text-muted)';
-    const fC=fEf!=null?(fEf>=100?'#1a7a56':fEf>=70?'#1565a8':'#c0392b'):'var(--text-muted)';
-    return `<td style="padding:4px 8px;"><div style="display:flex;flex-direction:column;gap:3px;min-width:90px;"><div style="display:flex;justify-content:space-between;align-items:center;gap:6px;"><span style="font-size:10px;color:var(--text-muted);font-weight:500;">ST</span><span style="font-weight:600;font-size:12px;color:${stC};">${stEf!=null?stEf+'%':'—'}</span></div><div style="border-top:1px solid var(--surface2);"></div><div style="display:flex;justify-content:space-between;align-items:center;gap:6px;"><span style="font-size:10px;color:var(--text-muted);font-weight:500;">Fidel</span><span style="font-weight:600;font-size:12px;color:${fC};">${fEf!=null?fEf+'%':'—'}</span></div></div></td>`;
+
+  function getTecEf(stW, nombre){
+    const tec = stW?.tecnicos?.find(x=>x.nombre.toLowerCase().includes(nombre.toLowerCase().split(' ')[0]));
+    return tec ? tec.efect : null;
   }
 
-  const headerRow=`<thead><tr><th rowspan="2" style="vertical-align:middle;">Semana</th>${soloST.map(n=>`<th rowspan="2" style="vertical-align:middle;color:white;font-size:10px;">${n.split(' ')[0]}<br><span style="font-weight:400;opacity:.7;">ST</span></th>`).join('')}<th style="color:white;font-size:10px;text-align:center;background:#1a5c3a;border-radius:4px 4px 0 0;">Mauricio González</th>${instalacion.map(n=>`<th rowspan="2" style="vertical-align:middle;color:white;font-size:10px;opacity:.5;">${n.split(' ')[0]}<br><span style="font-weight:400;opacity:.7;">Instalac.</span></th>`).join('')}</tr><tr><th style="background:#1a5c3a;"><div style="display:flex;justify-content:space-around;font-size:10px;color:rgba(255,255,255,.8);font-weight:400;"><span>ST</span><span>|</span><span>Fidel.</span></div></th></tr></thead>`;
+  // ── ENCABEZADO con separacion visual ST | Fidel | Instalac ──
+  const stSpan = stCols.length;
+  const fidelSpan = fidelCols.length;
+  const instSpan = instCols.length;
 
-  let html='';
+  const headerRow = `<thead>
+    <tr>
+      <th rowspan="2" style="vertical-align:middle;min-width:130px;">Semana</th>
+      <th colspan="${stSpan}" style="color:white;text-align:center;font-size:11px;border-bottom:2px solid rgba(255,255,255,.3);">Servicio Técnico</th>
+      <th colspan="${fidelSpan}" style="color:white;text-align:center;font-size:11px;border-bottom:2px solid rgba(255,255,255,.3);">Fidelización</th>
+      <th colspan="${instSpan}" style="color:white;text-align:center;font-size:11px;opacity:.5;border-bottom:2px solid rgba(255,255,255,.2);">Instalación</th>
+    </tr>
+    <tr>
+      ${stCols.map(n=>`<th style="color:white;font-size:10px;font-weight:400;">${n.split(' ')[0]}</th>`).join('')}
+      ${fidelCols.map(n=>`<th style="color:white;font-size:10px;font-weight:400;">${n.split(' ')[0]}</th>`).join('')}
+      ${instCols.map(n=>`<th style="color:white;font-size:10px;font-weight:400;opacity:.5;">${n.split(' ')[0]}</th>`).join('')}
+    </tr>
+  </thead>`;
+
+  function buildRow(lbl, stW, fW, indent, bg){
+    let html = `<tr style="${bg}"><td style="${indent}padding-left:${indent?'20px':'10px'};">${indent?'↳ ':''}<strong>${lbl}</strong></td>`;
+    // ST cols
+    stCols.forEach(n=>{ html+=efCell(getTecEf(stW,n), false); });
+    // Fidel cols
+    fidelCols.forEach(()=>{ html+=efCell(fW?fW.efectividad:null, false); });
+    // Instalacion cols
+    instCols.forEach(()=>{ html+=efCell(null, true); });
+    html+='</tr>';
+    return html;
+  }
+
+  let html = '';
   if(mesFiltro==='todos'){
     const byMes={};
     sortedLabels.forEach(lbl=>{
-      const stW=stWeeks.find(w=>w.label===lbl);const fW=fidelWeeks.find(w=>w.label===lbl);
+      const stW=stWeeks.find(w=>w.label===lbl);
+      const fW=fidelWeeks.find(w=>w.label===lbl);
       const mes=(stW||fW)?.mes||'Sin clasificar';
       if(!byMes[mes])byMes[mes]=[];byMes[mes].push(lbl);
     });
     const mesesSorted=Object.keys(byMes).sort((a,b)=>extractStartDate(byMes[a][0])-extractStartDate(byMes[b][0]));
     html=headerRow+'<tbody>';
     mesesSorted.forEach(mes=>{
-      const cols=1+soloST.length+1+instalacion.length;
-      html+=`<tr style="background:#1a3a5c;"><td colspan="${cols}" style="color:white;font-weight:600;">📁 ${mes}</td></tr>`;
+      const totalCols = 1+stSpan+fidelSpan+instSpan;
+      html+=`<tr style="background:#1a3a5c;"><td colspan="${totalCols}" style="color:white;font-weight:600;">📁 ${mes}</td></tr>`;
       byMes[mes].forEach((lbl,i)=>{
-        const stW=stWeeks.find(w=>w.label===lbl);const fW=fidelWeeks.find(w=>w.label===lbl);
+        const stW=stWeeks.find(w=>w.label===lbl);
+        const fW=fidelWeeks.find(w=>w.label===lbl);
         const bg=i%2===0?'':'background:var(--surface)';
-        html+=`<tr style="${bg}"><td style="padding-left:20px;">↳ ${lbl}</td>`;
-        soloST.forEach(n=>{const tec=stW?.tecnicos?.find(x=>x.nombre.toLowerCase().includes(n.toLowerCase().split(' ')[0]));html+=efCell(tec?tec.efect:null);});
-        const mST=stW?.tecnicos?.find(x=>x.nombre.toLowerCase().includes('mauricio'));
-        html+=mauricioCell(mST?mST.efect:null,fW?fW.efectividad:null);
-        instalacion.forEach(()=>{html+=`<td style="text-align:center;color:var(--text-muted);font-size:11px;font-style:italic;">—</td>`;});
-        html+='</tr>';
+        html+=buildRow(lbl,stW,fW,true,bg);
       });
     });
   } else {
     html=headerRow+'<tbody>';
     sortedLabels.forEach((lbl,i)=>{
-      const stW=stWeeks.find(w=>w.label===lbl);const fW=fidelWeeks.find(w=>w.label===lbl);
+      const stW=stWeeks.find(w=>w.label===lbl);
+      const fW=fidelWeeks.find(w=>w.label===lbl);
       const bg=i%2===0?'':'background:var(--surface)';
-      html+=`<tr style="${bg}"><td><strong>${lbl}</strong></td>`;
-      soloST.forEach(n=>{const tec=stW?.tecnicos?.find(x=>x.nombre.toLowerCase().includes(n.toLowerCase().split(' ')[0]));html+=efCell(tec?tec.efect:null);});
-      const mST=stW?.tecnicos?.find(x=>x.nombre.toLowerCase().includes('mauricio'));
-      html+=mauricioCell(mST?mST.efect:null,fW?fW.efectividad:null);
-      instalacion.forEach(()=>{html+=`<td style="text-align:center;color:var(--text-muted);font-size:11px;font-style:italic;">—</td>`;});
-      html+='</tr>';
+      html+=buildRow(lbl,stW,fW,false,bg);
     });
   }
   document.getElementById('resumenTabla').innerHTML=html+'</tbody>';
 
+  // ── GRÁFICO ST ──
   destroyChart('resumenST');
-  const stColores={'Santiago Munhoz':'#2e6da4','Ariel Sandoval':'#e8a04a','Gonzalo Rodriguez':'#5340b8','Marcos Martin':'#c0392b','Mauricio Gonzales':'#1a7a56'};
+  const stColores={'Santiago Munhoz':'#2e6da4','Ariel Sandoval':'#e8a04a','Mauricio Gonzales':'#1a7a56','Gonzalo Rodriguez':'#5340b8','Marcos Martin':'#c0392b'};
   charts['resumenST']=new Chart(document.getElementById('resumenChartST'),{
-    type:'line',data:{labels:sortedLabels,datasets:[...soloST,'Mauricio Gonzales'].map(n=>({
-      label:n,data:sortedLabels.map(lbl=>{const stW=stWeeks.find(w=>w.label===lbl);const tec=stW?.tecnicos?.find(x=>x.nombre.toLowerCase().includes(n.toLowerCase().split(' ')[0]));return tec?tec.efect:null;}),
+    type:'line',data:{labels:sortedLabels,datasets:stCols.map(n=>({
+      label:n,
+      data:sortedLabels.map(lbl=>{const stW=stWeeks.find(w=>w.label===lbl);return getTecEf(stW,n);}),
       borderColor:stColores[n]||'#888',backgroundColor:'transparent',tension:.3,pointRadius:4,spanGaps:true
     }))},
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:10}}}},scales:{x:{grid:{display:false}},y:{grid:{color:'#eef1f6'},beginAtZero:true,ticks:{callback:v=>v+'%'}}}}
   });
 
+  // ── GRÁFICO FIDEL ──
   destroyChart('resumenFidel');
-  charts['resumenFidel']=new Chart(document.getElementById('resumenChartFidel'),{
-    type:'bar',data:{labels:fidelWeeks.map(w=>w.label),datasets:[{label:'Mauricio González · Fidelización',data:fidelWeeks.map(w=>w.efectividad),backgroundColor:fidelWeeks.map(w=>w.efectividad>=100?'#1a7a56':w.efectividad>=70?'#2e6da4':'#c0392b'),borderRadius:4}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{grid:{color:'#eef1f6'},beginAtZero:true,ticks:{callback:v=>v+'%'}}}}
-  });
+  if(fidelWeeks.length){
+    charts['resumenFidel']=new Chart(document.getElementById('resumenChartFidel'),{
+      type:'bar',data:{labels:fidelWeeks.map(w=>w.label),datasets:[{
+        label:'Mauricio González · Fidelización',
+        data:fidelWeeks.map(w=>w.efectividad),
+        backgroundColor:fidelWeeks.map(w=>w.efectividad>=100?'#1a7a56':w.efectividad>=70?'#2e6da4':'#c0392b'),
+        borderRadius:4
+      }]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{grid:{color:'#eef1f6'},beginAtZero:true,ticks:{callback:v=>v+'%'}}}}
+    });
+  }
 }
+
 
 // Firebase ready callback
 window.onFirebaseReady=()=>{
