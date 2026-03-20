@@ -484,13 +484,17 @@ function showUpload(){
 
 // ── COEFICIENTES ──
 const COEF={
-  '1.Camara no funciona':1.79,'2.Problema en lectora':0.93,'3.Verificar sensor':1.2,
-  '4.Revisión':1.4,'5.Sonorizacion Buzzer':1.3,'6.Industrias':4.5,'7.Particular':1.8,
-  '8. Urgencia tecnica':1,'9. Guardia Tecnica':0,'91. Urgencia cerrajer':1,
-  '92. Guardia cerrajeri':0,'93. Cerrajería DTP/ELECTRO':0.72,'Express':0.74,
-  'T.Cambio bateria':1.12,'T.Cambio de Equipo':2.22,'T.Desinstalación':4.5,
-  'T.Recableado':3.16,'T.Reparacion de internet':1.14,'T. Migración':1,
-  'T. Reparación de internet':3,'T. Varios - uso técnica':0,
+  '1.CAMARA':1.79,'2.LECTORA':0.93,'3.VERIFICAR SENSOR':1.2,
+  '4.REVISION':1.4,'5.SONORIZACION SISTEMA':1.3,'6.BATERIA':1.12,
+  '8. URGENCIA TECNICA':1,'91. GUARDIA TECNICA':0,'92. GUARDIA CERRAJERIA':0,
+  '93. URGENCIA CERRAJERIA':1,'94. CERRAJERIA DTP/ELECTRO':0.72,
+  'EXPRESS - 1. FALLA 220V':0.7,'EXPRESS - 2. FALTA DE TEST':0.7,
+  'EXPRESS - 3. REINICIO DE PLACA':0.7,'EXPRESS - 4.FALLA DVR/NVR':0.7,
+  'EXPRESS - 5.FALLA AUTOACTIVACI':0.7,'EXPRESS - 6.ANULACION/HABILITA':0.7,
+  'EXPRESS - 8.TAMPERS EDIFICIO':0.7,'Express - Carteleria':0.7,
+  'Express - Controles remotos':0.7,'P1.PARTICULAR':1.8,'P2. INDUSTRIAS':4.5,
+  'T. Cambio de Equipo':2.22,'T. Desinstalación':3,'T.Migración':1,
+  'T.Recableado':4.5,'T.Reparacion de internet':2.5,'T.Varios - uso técnica':0,
 };
 function getCoef(srv){
   if(!srv) return null;
@@ -692,14 +696,14 @@ function computeSummary(df,otGen,label){
     if(!tecStats[t])tecStats[t]={dias:new Set(),g_tec:0,g_cerr:0};
     if(!tecSrvMap[t])tecSrvMap[t]={};
     const srv=String(r['Servicio']||'').toLowerCase();
-    const esGuardia = srv.includes('guardia tecnica')||srv.includes('9. guardia')||srv.includes('guardia cerrajer')||srv.includes('92.');
+    const esGuardia = srv.includes('guardia tecnica')||srv.includes('guardia cerrajeria');
     const fecha=r['Fecha de finalizacion'];
     if(fecha && !esGuardia){
       const d=fecha instanceof Date?fecha:new Date(fecha);
       if(!isNaN(d)&&d.getDay()!==0&&d.getDay()!==6) tecStats[t].dias.add(d.toDateString());
     }
-    if(srv.includes('guardia tecnica')||srv.includes('9. guardia'))tecStats[t].g_tec++;
-    if(srv.includes('guardia cerrajer')||srv.includes('92.'))tecStats[t].g_cerr++;
+    if(srv.includes('guardia tecnica'))tecStats[t].g_tec++;
+    if(srv.includes('guardia cerrajeria'))tecStats[t].g_cerr++;
     const sk=String(r['Servicio']||'').trim();
     if(sk)tecSrvMap[t][sk]=(tecSrvMap[t][sk]||0)+1;
   });
