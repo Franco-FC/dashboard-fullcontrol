@@ -1422,7 +1422,7 @@ function renderResumen(){
     html=headerRow+'<tbody>';
     mesesSorted.forEach(mes=>{
       const totalCols = 1+stSpan+fidelSpan+instSpan;
-      html+=`<tr style="background:#1a3a5c;"><td colspan="${totalCols}" style="color:white;font-weight:600;">📁 ${mes}</td></tr>`;
+      html+=`<tr style="background:#1a3a5c !important;"><td colspan="${totalCols}" style="color:white;font-weight:600;background:#1a3a5c;">📁 ${mes}</td></tr>`;
       byMes[mes].forEach((lbl,i)=>{
         const stW=stWeeks.find(w=>w.label===lbl);
         const fW=fidelWeeks.find(w=>w.label===lbl);
@@ -1495,7 +1495,7 @@ function renderResumen(){
       type:'line',data:{labels:fidelWeeks.map(w=>w.label),datasets:[{
         label:'Mauricio González',
         data:fidelWeeks.map(w=>w.efectividad),
-        borderColor:'#1a7a56',backgroundColor:'rgba(26,122,86,.08)',tension:.3,pointRadius:5,fill:true,spanGaps:true
+        borderColor:'#1a7a56',backgroundColor:'transparent',tension:.3,pointRadius:5,fill:false,spanGaps:true
       }]},
       options:{responsive:true,maintainAspectRatio:false,
         plugins:{legend:{position:'bottom',labels:{font:{size:10}}}},
