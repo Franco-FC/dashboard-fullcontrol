@@ -496,13 +496,22 @@ const COEF={
   'T.Cambio de Equipo':2.22,'T. Cambio de Equipo':2.22,'T. Desinstalación':3,'T.Migración':1,'T. Migración':1,
   'T.Recableado':4.5,'T.Reparacion de internet':2.5,'T.Varios - uso técnica':0,
 };
+function normalizeStr(s){
+  return s.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ');
+}
 function getCoef(srv){
   if(!srv) return null;
   const s=srv.trim();
+  // Exact match first
   if(COEF[s]!==undefined) return COEF[s];
+  // Normalized exact match
+  const sNorm=normalizeStr(s);
   for(const [k,v] of Object.entries(COEF)){
-    if(s.toLowerCase().startsWith(k.toLowerCase())) return v;
-    if(k.toLowerCase().startsWith('express')&&s.toLowerCase().startsWith('express')) return v;
+    if(normalizeStr(k)===sNorm) return v;
+  }
+  // Normalized startsWith
+  for(const [k,v] of Object.entries(COEF)){
+    if(sNorm.startsWith(normalizeStr(k))) return v;
   }
   return null;
 }
